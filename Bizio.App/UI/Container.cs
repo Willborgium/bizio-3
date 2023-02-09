@@ -1,10 +1,12 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Bizio.App.UI
 {
-    public interface IContainer : IRenderable
+    public interface IContainer : IRenderable, ITranslatable
     {
         void AddChild(IRenderable child);
         void RemoveChild(IRenderable child);
@@ -16,14 +18,28 @@ namespace Bizio.App.UI
 
         public int ZIndex { get; set; }
 
+        public ITranslatable Parent { get; set; }
+
+        public Vector2 Position { get; set; }
+
         public void AddChild(IRenderable child)
         {
             _renderables.Add(child);
+
+            if (child is ITranslatable t)
+            {
+                t.Parent = this;
+            }
         }
 
         public void RemoveChild(IRenderable child)
         {
             _renderables.Remove(child);
+
+            if (child is ITranslatable t)
+            {
+                t.Parent = null;
+            }
         }
 
         public abstract void Render(SpriteBatch renderer);

@@ -77,7 +77,10 @@ namespace Bizio.App
 
             CreatePersonDetailsContainer();
 
-            var peopleContainer = new Container();
+            var peopleContainer = new Container
+            {
+                Position = new Vector2(100, 100)
+            };
             _resources.Set("container-people", peopleContainer);
             _renderables.Add(peopleContainer);
 
@@ -381,7 +384,8 @@ namespace Bizio.App
             var button = new Button(metadata)
             {
                 Text = text,
-                Destination = new Rectangle(x, y, width, height)
+                Position = new Vector2(x, y),
+                Dimensions = new Vector2(width, height)
             };
 
             button.Clicked += handler;

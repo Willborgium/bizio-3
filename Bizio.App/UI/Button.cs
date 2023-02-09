@@ -2,10 +2,11 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.ComponentModel.Design.Serialization;
 
 namespace Bizio.App.UI
 {
-    public class Button : IUpdateable, IRenderable
+    public class Button : IUpdateable, IRenderable, ITranslatable
     {
         public bool IsVisible { get; set; }
 
@@ -15,7 +16,11 @@ namespace Bizio.App.UI
 
         public string Text { get; set; }
 
-        public Rectangle Destination { get; set; }
+        public ITranslatable Parent { get; set; }
+
+        public Vector2 Position { get; set; }
+
+        public Vector2 Dimensions { get; set; }
 
         public event EventHandler Clicked;
 
@@ -80,6 +85,23 @@ namespace Bizio.App.UI
             var y = Destination.Center.Y - (textDimensions.Y / 2);
 
             renderer.DrawString(_metadata.Font, Text, new Vector2(x, y), Color.Black);
+        }
+
+        private Rectangle Destination
+        {
+            get
+            {
+                var root = Vector2.Zero;
+                var p = Parent;
+
+                while (p != null)
+                {
+                    root += p.Position;
+                    p = p.Parent;
+                }
+
+                return new Rectangle((int)(root.X + Position.X), (int)(root.Y + Position.Y), (int)Dimensions.X, (int)Dimensions.Y);
+            }
         }
 
         private ButtonState _state;
