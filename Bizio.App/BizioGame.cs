@@ -8,6 +8,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Bizio.App
 {
@@ -22,6 +23,8 @@ namespace Bizio.App
 
         private readonly ConcurrentBag<IUpdateable> _updateables;
         private readonly ICollection<IRenderable> _renderables;
+
+        private IContainer _visualRoot;
 
         public BizioGame()
         {
@@ -39,6 +42,13 @@ namespace Bizio.App
 
         protected override void Initialize()
         {
+            _visualRoot = new VisualContainer
+            {
+                Position = new Vector2(0, 0)
+            };
+
+            _visualRoot.AddChild(_logger);
+
             base.Initialize();
         }
 
@@ -69,24 +79,25 @@ namespace Bizio.App
             _resources.Set("button-spritesheet-default", buttonSpritesheet);
             _resources.Set("button-metadata-default", buttonMetadata);
 
-            CreateButton("Logger", 1500, 10, 300, 50, ToggleDebugInfo);
-            CreateButton("Snapshot", 1500, 70, 300, 50, LogSnapshot);
-            CreateButton("New Game", 1500, 130, 300, 50, StartNewGame);
-            CreateButton("People", 1500, 190, 300, 50, TogglePeopleList);
-            CreateButton("My Company", 1500, 250, 300, 50, ToggleMyCompany);
-
-            CreatePersonDetailsContainer();
-
-            var peopleContainer = new Container
+            var sampleContainer = new StackContainer
             {
-                Position = new Vector2(100, 100)
+                Position = new Vector2(0, 0),
+                Padding = Vector4.One * 10,
+                Direction = LayoutDirection.Horizontal
             };
-            _resources.Set("container-people", peopleContainer);
-            _renderables.Add(peopleContainer);
+            _visualRoot.AddChild(sampleContainer);
 
-            var myCompanyContainer = new Container();
-            _resources.Set("container-my-company", myCompanyContainer);
-            _renderables.Add(myCompanyContainer);
+            _logger.IsVisible = false;
+
+            sampleContainer.AddChild(CreateButton("Logger", 0, 0, 300, 50, ToggleDebugInfo));
+            sampleContainer.AddChild(CreateButton("Snapshot", 0, 0, 300, 50, LogSnapshot));
+            sampleContainer.AddChild(CreateButton("New Game", 0, 0, 300, 50, StartNewGame));
+            sampleContainer.AddChild(CreateButton("People", 0, 0, 300, 50, TogglePeopleList));
+            sampleContainer.AddChild(CreateButton("My Company", 0, 0, 300, 50, ToggleMyCompany));
+
+            _visualRoot.AddChild(CreatePeopleContainer());
+            _visualRoot.AddChild(CreatePersonDetailsContainer());
+            _visualRoot.AddChild(CreateMyCompanyContainer());
 
             _dataService.Initialize();
 
@@ -111,9 +122,13 @@ namespace Bizio.App
             // show my company
         }
 
-        private void CreatePersonDetailsContainer()
+        private IRenderable CreatePersonDetailsContainer()
         {
-            var root = new Container();
+            var root = new VisualContainer
+            {
+                IsVisible = false
+            };
+
             _resources.Set("container-person-details", root);
             _renderables.Add(root);
 
@@ -125,7 +140,7 @@ namespace Bizio.App
                 IsVisible = true,
                 Font = font,
                 Color = Color.Black,
-                Position = new Vector2(500, 100),
+                Position = new Vector2(400, 0),
                 Text = "Name:"
             };
 
@@ -137,7 +152,7 @@ namespace Bizio.App
                 IsVisible = true,
                 Font = font,
                 Color = Color.Black,
-                Position = new Vector2(600, 100)
+                Position = new Vector2(500, 0)
             };
 
             _resources.Set("container-person-details-textbox-name", nameTextBox);
@@ -149,7 +164,7 @@ namespace Bizio.App
                 IsVisible = true,
                 Font = font,
                 Color = Color.Black,
-                Position = new Vector2(500, 150),
+                Position = new Vector2(400, 50),
                 Text = "Gender:"
             };
 
@@ -161,16 +176,15 @@ namespace Bizio.App
                 IsVisible = true,
                 Font = font,
                 Color = Color.Black,
-                Position = new Vector2(600, 150)
+                Position = new Vector2(500, 50)
             };
 
             _resources.Set("container-person-details-textbox-gender", genderTextBox);
             root.AddChild(genderTextBox);
 
             // Hire Button
-            var hireButton = CreateButton("Hire", 500, 200, 300, 50, HireCurrentPerson);
+            var hireButton = CreateButton("Hire", 400, 100, 300, 50, HireCurrentPerson);
             _resources.Set("container-person-details-button-hire", hireButton);
-            _renderables.Remove(hireButton);
             root.AddChild(hireButton);
 
 
@@ -180,12 +194,33 @@ namespace Bizio.App
                 IsVisible = true,
                 Font = font,
                 Color = Color.Black,
-                Position = new Vector2(500, 275),
+                Position = new Vector2(400, 175),
                 Text = "Skills"
             };
 
             _resources.Set("container-person-details-label-skills", skillsLabel);
             root.AddChild(skillsLabel);
+
+            return root;
+        }
+
+        private IRenderable CreatePeopleContainer()
+        {
+            var peopleContainer = new StackContainer
+            {
+                Position = new Vector2(0, 100),
+                Padding = new Vector4(20, 5, 20, 5)
+            };
+            _resources.Set("container-people", peopleContainer);
+
+            return peopleContainer;
+        }
+
+        private IRenderable CreateMyCompanyContainer()
+        {
+            var myCompanyContainer = new VisualContainer();
+            _resources.Set("container-my-company", myCompanyContainer);
+            return myCompanyContainer;
         }
 
         private void HireCurrentPerson(object sender, EventArgs e)
@@ -218,7 +253,7 @@ namespace Bizio.App
 
         private void TogglePeopleList(object sender, EventArgs e)
         {
-            var container = _resources.Get<Container>("container-people");
+            var container = _resources.Get<StackContainer>("container-people");
             container.IsVisible = !container.IsVisible;
             _logger.Info($"People container toggled: {container.IsVisible}");
         }
@@ -230,19 +265,14 @@ namespace Bizio.App
             _logger.Info($"Game ID: {_dataService.CurrentGame.GameId}");
             _logger.Info($"Person count: {_dataService.CurrentGame.People.Count}");
 
-            var offset = 10;
-
-            var peopleContainer = _resources.Get<Container>("container-people");
+            var peopleContainer = _resources.Get<StackContainer>("container-people");
 
             foreach (var person in _dataService.CurrentGame.People)
             {
                 _logger.Info($"Person {person.Id}: {person.FirstName} {person.LastName}, Skills: {person.Skills.Count}");
 
-                var button = CreateButton($"{person.FirstName} {person.LastName}", 10, offset, 300, 50, (s, e) => TogglePerson(person));
-                _renderables.Remove(button);
+                var button = CreateButton($"{person.FirstName} {person.LastName}", 0, 0, 300, 50, (s, e) => TogglePerson(person));
                 peopleContainer.AddChild(button);
-
-                offset += 60;
             }
 
             _logger.Info($"Company count: {_dataService.CurrentGame.Companies.Count}");
@@ -256,7 +286,7 @@ namespace Bizio.App
 
         private void TogglePerson(Person person)
         {
-            var container = _resources.Get<Container>("container-person-details");
+            var container = _resources.Get<VisualContainer>("container-person-details");
 
             if (person == null)
             {
@@ -272,11 +302,9 @@ namespace Bizio.App
                 {
                     var skillLabel = _resources.Get<TextBox>($"container-person-details-label-skill-{skill.SkillId}");
                     container.RemoveChild(skillLabel);
-                    _renderables.Remove(skillLabel);
 
                     var skillTextBox = _resources.Get<TextBox>($"container-person-details-textbox-skill-{skill.SkillId}");
                     container.RemoveChild(skillTextBox);
-                    _renderables.Remove(skillTextBox);
                 }
             }
 
@@ -304,7 +332,7 @@ namespace Bizio.App
                 hireButton.IsEnabled = true;
             }
 
-            var offset = 300f;
+            var offset = 200;
 
             var font = _resources.Get<SpriteFont>("font-default");
 
@@ -316,7 +344,7 @@ namespace Bizio.App
                 {
                     Font = font,
                     Color = Color.Black,
-                    Position = new Vector2(550, offset),
+                    Position = new Vector2(500, offset),
                     Text = $"{skill.Name}",
                     IsVisible = true
                 };
@@ -328,7 +356,7 @@ namespace Bizio.App
                 {
                     Font = font,
                     Color = Color.Black,
-                    Position = new Vector2(650, offset),
+                    Position = new Vector2(550, offset),
                     Text = $"{personSkill.Value:0.0}",
                     IsVisible = true
                 };
@@ -365,12 +393,7 @@ namespace Bizio.App
 
             _spriteBatch.Begin();
 
-            foreach (var renderable in _renderables.OrderBy(r => r.ZIndex))
-            {
-                if (!renderable.IsVisible) continue;
-
-                renderable.Render(_spriteBatch);
-            }
+            _visualRoot.Render(_spriteBatch);
 
             _spriteBatch.End();
 
@@ -391,7 +414,6 @@ namespace Bizio.App
             button.Clicked += handler;
 
             _updateables.Add(button);
-            _renderables.Add(button);
 
             return button;
         }

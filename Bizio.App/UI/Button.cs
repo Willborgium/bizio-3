@@ -6,7 +6,7 @@ using System.ComponentModel.Design.Serialization;
 
 namespace Bizio.App.UI
 {
-    public class Button : IUpdateable, IRenderable, ITranslatable
+    public class Button : IUpdateable, IRenderable, ITranslatable, IMeasurable
     {
         public bool IsVisible { get; set; }
 
@@ -16,7 +16,7 @@ namespace Bizio.App.UI
 
         public string Text { get; set; }
 
-        public ITranslatable Parent { get; set; }
+        public IContainer Parent { get; set; }
 
         public Vector2 Position { get; set; }
 
@@ -91,16 +91,9 @@ namespace Bizio.App.UI
         {
             get
             {
-                var root = Vector2.Zero;
-                var p = Parent;
+                var position = Parent?.GetChildAbsolutePosition(this) ?? Position;
 
-                while (p != null)
-                {
-                    root += p.Position;
-                    p = p.Parent;
-                }
-
-                return new Rectangle((int)(root.X + Position.X), (int)(root.Y + Position.Y), (int)Dimensions.X, (int)Dimensions.Y);
+                return new Rectangle((int)(position.X), (int)(position.Y), (int)Dimensions.X, (int)Dimensions.Y);
             }
         }
 

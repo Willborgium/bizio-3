@@ -3,11 +3,13 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Bizio.App.UI
 {
-    public class TextBox : IRenderable
+    public class TextBox : IRenderable, ITranslatable
     {
         public bool IsVisible { get; set; }
 
         public int ZIndex { get; set; }
+
+        public IContainer Parent { get; set; }
 
         public SpriteFont Font { get; set; }
 
@@ -19,7 +21,9 @@ namespace Bizio.App.UI
 
         public void Render(SpriteBatch renderer)
         {
-            renderer.DrawString(Font, Text ?? string.Empty, Position, Color);
+            var position = Parent?.GetChildAbsolutePosition(this) ?? Position;
+
+            renderer.DrawString(Font, Text ?? string.Empty, position, Color);
         }
     }
 }
