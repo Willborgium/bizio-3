@@ -8,6 +8,7 @@ namespace Bizio.App.Game
         public Guid Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
+        public string FullName => $"{FirstName} {LastName}";
         public Gender Gender { get; set; }
         public ICollection<PersonSkill> Skills { get; set; } = new List<PersonSkill>();
     }

@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Bizio.App.UI
 {
-    public class TextBox : IRenderable, ITranslatable
+    public class TextBox : IRenderable, ITranslatable, IMeasurable
     {
         public bool IsVisible { get; set; }
 
@@ -18,6 +18,8 @@ namespace Bizio.App.UI
         public Color Color { get; set; }
 
         public string Text { get; set; }
+
+        public Vector2 Dimensions => Font?.MeasureString(Text) ?? Vector2.Zero;
 
         public void Render(SpriteBatch renderer)
         {

@@ -49,6 +49,25 @@ namespace Bizio.App.UI
             return Parent?.GetChildAbsolutePosition(child) ?? child.Position;
         }
 
+        public int GetChildCount(bool isRecursive)
+        {
+            var count = 0;
+
+            foreach (var child in _renderables)
+            {
+                if (isRecursive && child is IContainer container)
+                {
+                    count += container.GetChildCount(true);
+                }
+                else
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
         protected readonly ICollection<IRenderable> _renderables = new HashSet<IRenderable>();
     }
 }

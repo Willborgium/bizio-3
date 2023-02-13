@@ -9,6 +9,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Threading.Channels;
 
 namespace Bizio.App
 {
@@ -81,7 +83,7 @@ namespace Bizio.App
 
             var sampleContainer = new StackContainer
             {
-                Position = new Vector2(0, 0),
+                Position = new Vector2(500, 0),
                 Padding = Vector4.One * 10,
                 Direction = LayoutDirection.Horizontal
             };
@@ -89,14 +91,13 @@ namespace Bizio.App
 
             _logger.IsVisible = false;
 
-            sampleContainer.AddChild(CreateButton("Logger", 0, 0, 300, 50, ToggleDebugInfo));
-            sampleContainer.AddChild(CreateButton("Snapshot", 0, 0, 300, 50, LogSnapshot));
-            sampleContainer.AddChild(CreateButton("New Game", 0, 0, 300, 50, StartNewGame));
-            sampleContainer.AddChild(CreateButton("People", 0, 0, 300, 50, TogglePeopleList));
-            sampleContainer.AddChild(CreateButton("My Company", 0, 0, 300, 50, ToggleMyCompany));
+            sampleContainer.AddChild(CreateButton("Logger", 0, 0, 200, 50, ToggleDebugInfo));
+            sampleContainer.AddChild(CreateButton("Snapshot", 0, 0, 200, 50, LogSnapshot));
+            sampleContainer.AddChild(CreateButton("New Game", 0, 0, 200, 50, StartNewGame));
+            sampleContainer.AddChild(CreateButton("People", 0, 0, 200, 50, TogglePeopleList));
+            sampleContainer.AddChild(CreateButton("My Company", 0, 0, 200, 50, ToggleMyCompany));
 
             _visualRoot.AddChild(CreatePeopleContainer());
-            _visualRoot.AddChild(CreatePersonDetailsContainer());
             _visualRoot.AddChild(CreateMyCompanyContainer());
 
             _dataService.Initialize();
@@ -108,7 +109,7 @@ namespace Bizio.App
 
         private void LogSnapshot(object sender, EventArgs e)
         {
-            var renderableCount = _renderables.Count;
+            var renderableCount = _visualRoot.GetChildCount(true);
             var updateableCount = _updateables.Count;
 
             _logger.Info("[BEGIN SNAPSHOT]");
@@ -122,11 +123,12 @@ namespace Bizio.App
             // show my company
         }
 
-        private IRenderable CreatePersonDetailsContainer()
+        private IRenderable CreatePersonDetailsContainer(Person person)
         {
             var root = new VisualContainer
             {
-                IsVisible = false
+                IsVisible = true,
+                Position = new Vector2(400, 0)
             };
 
             _resources.Set("container-person-details", root);
@@ -135,58 +137,38 @@ namespace Bizio.App
             var font = _resources.Get<SpriteFont>("font-default");
 
             // Name
-            var nameLabel = new TextBox
+            var nameLabel = new LabeledTextBox
             {
                 IsVisible = true,
                 Font = font,
                 Color = Color.Black,
-                Position = new Vector2(400, 0),
-                Text = "Name:"
+                Position = new Vector2(0, 0),
+                Label = "Name",
+                LabelWidth = 75,
+                Text = person.FullName
             };
 
-            _resources.Set("container-person-details-label-name", nameLabel);
             root.AddChild(nameLabel);
 
-            var nameTextBox = new TextBox
-            {
-                IsVisible = true,
-                Font = font,
-                Color = Color.Black,
-                Position = new Vector2(500, 0)
-            };
-
-            _resources.Set("container-person-details-textbox-name", nameTextBox);
-            root.AddChild(nameTextBox);
-
             // Gender
-            var genderLabel = new TextBox
+            var genderLabel = new LabeledTextBox
             {
                 IsVisible = true,
                 Font = font,
                 Color = Color.Black,
-                Position = new Vector2(400, 50),
-                Text = "Gender:"
+                Position = new Vector2(0, 50),
+                Label = "Gender",
+                LabelWidth = 75,
+                Text = $"{person.Gender}"
             };
 
-            _resources.Set("container-person-details-label-gender", genderLabel);
             root.AddChild(genderLabel);
 
-            var genderTextBox = new TextBox
-            {
-                IsVisible = true,
-                Font = font,
-                Color = Color.Black,
-                Position = new Vector2(500, 50)
-            };
-
-            _resources.Set("container-person-details-textbox-gender", genderTextBox);
-            root.AddChild(genderTextBox);
-
             // Hire Button
-            var hireButton = CreateButton("Hire", 400, 100, 300, 50, HireCurrentPerson);
+            var hireButton = CreateButton("Hire", 0, 100, 300, 50, HireCurrentPerson);
+            hireButton.IsEnabled = _dataService.CurrentGame.PlayerCompany.Employees.Any(e => e.PersonId == person.Id);
             _resources.Set("container-person-details-button-hire", hireButton);
             root.AddChild(hireButton);
-
 
             // Skills
             var skillsLabel = new TextBox
@@ -194,12 +176,38 @@ namespace Bizio.App
                 IsVisible = true,
                 Font = font,
                 Color = Color.Black,
-                Position = new Vector2(400, 175),
+                Position = new Vector2(0, 175),
                 Text = "Skills"
             };
 
-            _resources.Set("container-person-details-label-skills", skillsLabel);
             root.AddChild(skillsLabel);
+
+            var skillsContainer = new StackContainer
+            {
+                IsVisible = true,
+                Position = new Vector2(75, 200),
+                Direction = LayoutDirection.Vertical,
+                Padding = new Vector4(0, 5, 0, 5)
+            };
+            root.AddChild(skillsContainer);
+
+            foreach (var personSkill in person.Skills.OrderByDescending(s => s.Value))
+            {
+                var skill = _dataService.StaticData.Skills.First(s => s.Id == personSkill.SkillId);
+
+                var skillLabel = new LabeledTextBox
+                {
+                    IsVisible = true,
+                    Font = font,
+                    Color = Color.Black,
+                    Position = new Vector2(0, 0),
+                    Label = skill.Name,
+                    LabelWidth = 50,
+                    Text = $"{personSkill.Value:0.0}"
+                };
+
+                skillsContainer.AddChild(skillLabel);
+            }
 
             return root;
         }
@@ -286,90 +294,28 @@ namespace Bizio.App
 
         private void TogglePerson(Person person)
         {
-            var container = _resources.Get<VisualContainer>("container-person-details");
+            var previousContainer = _resources.Get<VisualContainer>("container-person-details");
 
-            if (person == null)
+            var previousPerson = _resources.Get<Person>("previous-person");
+
+            // TODO: when removing children from the visual tree
+            // check if they are updateable OR have updateable children
+            // and remove those from the logical tree as well
+            // buttons are the current problem. Once created, they exist
+            // 4ever
+            _visualRoot.RemoveChild(previousContainer);
+
+            if (person == null || person == previousPerson)
             {
-                container.IsVisible = false;
+                _resources.Set("previous-person", null);
                 return;
             }
 
-            var previousPerson = _resources.Get<Person>("container-person-details-current-person");
+            _resources.Set("previous-person", person);
 
-            if (previousPerson != null)
-            {
-                foreach (var skill in previousPerson.Skills)
-                {
-                    var skillLabel = _resources.Get<TextBox>($"container-person-details-label-skill-{skill.SkillId}");
-                    container.RemoveChild(skillLabel);
+            var currentContainer = CreatePersonDetailsContainer(person);
 
-                    var skillTextBox = _resources.Get<TextBox>($"container-person-details-textbox-skill-{skill.SkillId}");
-                    container.RemoveChild(skillTextBox);
-                }
-            }
-
-            if (previousPerson == person)
-            {
-                _resources.Set("container-person-details-current-person", null);
-                container.IsVisible = false;
-                return;
-            }
-
-            var nameTextBox = _resources.Get<TextBox>("container-person-details-textbox-name");
-            nameTextBox.Text = $"{person.FirstName} {person.LastName}";
-
-            var genderTextBox = _resources.Get<TextBox>("container-person-details-textbox-gender");
-            genderTextBox.Text = $"{person.Gender}";
-
-            var hireButton = _resources.Get<Button>("container-person-details-button-hire");
-
-            if (_dataService.CurrentGame.PlayerCompany.Employees.Any(e => e.PersonId == person.Id))
-            {
-                hireButton.IsEnabled = false;
-            }
-            else
-            {
-                hireButton.IsEnabled = true;
-            }
-
-            var offset = 200;
-
-            var font = _resources.Get<SpriteFont>("font-default");
-
-            foreach (var personSkill in person.Skills.OrderByDescending(s => s.Value))
-            {
-                var skill = _dataService.StaticData.Skills.First(s => s.Id == personSkill.SkillId);
-
-                var skillLabel = new TextBox
-                {
-                    Font = font,
-                    Color = Color.Black,
-                    Position = new Vector2(500, offset),
-                    Text = $"{skill.Name}",
-                    IsVisible = true
-                };
-
-                container.AddChild(skillLabel);
-                _resources.Set($"container-person-details-label-skill-{skill.Id}", skillLabel);
-
-                var skillTextBox = new TextBox
-                {
-                    Font = font,
-                    Color = Color.Black,
-                    Position = new Vector2(550, offset),
-                    Text = $"{personSkill.Value:0.0}",
-                    IsVisible = true
-                };
-
-                offset += 30;
-
-                container.AddChild(skillTextBox);
-                _resources.Set($"container-person-details-textbox-skill-{skill.Id}", skillTextBox);
-            }
-
-            _resources.Set("container-person-details-current-person", person);
-
-            container.IsVisible = true;
+            _visualRoot.AddChild(currentContainer);
         }
 
         protected override void Update(GameTime gameTime)
