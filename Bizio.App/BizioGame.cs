@@ -8,9 +8,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Threading.Channels;
 
 namespace Bizio.App
 {
@@ -83,9 +80,9 @@ namespace Bizio.App
 
             var sampleContainer = new StackContainer
             {
-                Position = new Vector2(500, 0),
+                Position = new Vector2(1700, 50),
                 Padding = Vector4.One * 10,
-                Direction = LayoutDirection.Horizontal
+                Direction = LayoutDirection.Vertical
             };
             _visualRoot.AddChild(sampleContainer);
 
@@ -94,17 +91,85 @@ namespace Bizio.App
             sampleContainer.AddChild(CreateButton("Logger", 0, 0, 200, 50, ToggleDebugInfo));
             sampleContainer.AddChild(CreateButton("Snapshot", 0, 0, 200, 50, LogSnapshot));
             sampleContainer.AddChild(CreateButton("New Game", 0, 0, 200, 50, StartNewGame));
-            sampleContainer.AddChild(CreateButton("People", 0, 0, 200, 50, TogglePeopleList));
             sampleContainer.AddChild(CreateButton("My Company", 0, 0, 200, 50, ToggleMyCompany));
+            sampleContainer.AddChild(CreateButton("People", 0, 0, 200, 50, TogglePeopleList));
+            sampleContainer.AddChild(CreateButton("Projects", 0, 0, 200, 50, ToggleProjectsList));
+
+            var headlineContainer = new StackContainer
+            {
+                Position = new Vector2(500, 0),
+                IsVisible = false,
+                Padding = new Vector4(50, 20, 50, 20),
+                Direction = LayoutDirection.Horizontal
+            };
+            _visualRoot.AddChild(headlineContainer);
+            _resources.Set("headline-container", headlineContainer);
+
+            var currentTurn = new TextBox
+            {
+                IsVisible = true,
+                Color = Color.Black,
+                Font = font
+            };
+            headlineContainer.AddChild(currentTurn);
+            _resources.Set("current-turn-textbox", currentTurn);
+
+            var companyName = new TextBox
+            {
+                IsVisible = true,
+                Color = Color.Black,
+                Font = font,
+                
+            };
+            headlineContainer.AddChild(companyName);
+            _resources.Set("company-name-textbox", companyName);
+
+            var companyMoney = new TextBox
+            {
+                IsVisible = true,
+                Color = Color.Black,
+                Font = font
+            };
+            headlineContainer.AddChild(companyMoney);
+            _resources.Set("company-money-textbox", companyMoney);
+
+            var employeeCount = new TextBox
+            {
+                IsVisible = true,
+                Color = Color.Black,
+                Font = font
+            };
+            headlineContainer.AddChild(employeeCount);
+            _resources.Set("employee-count-textbox", employeeCount);
+
+            var nextTurnButton = CreateButton("Next Turn", 0, 0, 200, 50, NextTurn);
+            _resources.Set("next-turn-button", nextTurnButton);
+            headlineContainer.AddChild(nextTurnButton);
 
             _visualRoot.AddChild(CreatePeopleContainer());
+            _visualRoot.AddChild(CreateProjectsContainer());
             _visualRoot.AddChild(CreateMyCompanyContainer());
+
+            CloseAllContainers();
 
             _dataService.Initialize();
 
             _logger.Info($"Skill count: {_dataService.StaticData.Skills.Count}");
 
             _logger.Info("Initialization complete");
+        }
+
+        private void ToggleProjectsList(object sender, EventArgs e) => ToggleContainer("container-projects");
+
+        private void NextTurn(object sender, EventArgs e)
+        {
+            _dataService.CurrentGame.Turn++;
+
+            var currentTurnTextBox = _resources.Get<TextBox>("current-turn-textbox");
+            currentTurnTextBox.IsVisible = true;
+            currentTurnTextBox.Text = $"Turn {_dataService.CurrentGame.Turn}";
+
+            UpdateHeadlineContainer();
         }
 
         private void LogSnapshot(object sender, EventArgs e)
@@ -118,9 +183,18 @@ namespace Bizio.App
             _logger.Info("[END SNAPSHOT]");
         }
 
-        private void ToggleMyCompany(object sender, EventArgs e)
+        private void ToggleMyCompany(object sender, EventArgs e) => ToggleContainer("container-my-company");
+
+        private IRenderable CreatePeopleContainer()
         {
-            // show my company
+            var container = new StackContainer
+            {
+                Position = new Vector2(0, 100),
+                Padding = new Vector4(20, 5, 20, 5)
+            };
+            _resources.Set("container-people", container);
+
+            return container;
         }
 
         private IRenderable CreatePersonDetailsContainer(Person person)
@@ -166,7 +240,7 @@ namespace Bizio.App
 
             // Hire Button
             var hireButton = CreateButton("Hire", 0, 100, 300, 50, HireCurrentPerson);
-            hireButton.IsEnabled = _dataService.CurrentGame.PlayerCompany.Employees.Any(e => e.PersonId == person.Id);
+            hireButton.IsEnabled = !_dataService.CurrentGame.PlayerCompany.Employees.Any(e => e.PersonId == person.Id);
             _resources.Set("container-person-details-button-hire", hireButton);
             root.AddChild(hireButton);
 
@@ -212,16 +286,16 @@ namespace Bizio.App
             return root;
         }
 
-        private IRenderable CreatePeopleContainer()
+        private IRenderable CreateProjectsContainer()
         {
-            var peopleContainer = new StackContainer
+            var container = new StackContainer
             {
                 Position = new Vector2(0, 100),
                 Padding = new Vector4(20, 5, 20, 5)
             };
-            _resources.Set("container-people", peopleContainer);
+            _resources.Set("container-projects", container);
 
-            return peopleContainer;
+            return container;
         }
 
         private IRenderable CreateMyCompanyContainer()
@@ -233,7 +307,7 @@ namespace Bizio.App
 
         private void HireCurrentPerson(object sender, EventArgs e)
         {
-            var person = _resources.Get<Person>("container-person-details-current-person");
+            var person = _resources.Get<Person>("previous-person");
 
             if (person == null)
             {
@@ -249,7 +323,7 @@ namespace Bizio.App
 
             _dataService.CurrentGame.PlayerCompany.Employees.Add(employee);
 
-            var hireButton = _resources.Get<Button>("container-person-details-button-hire");
+            var hireButton = sender as Button;
             hireButton.IsEnabled = false;
         }
 
@@ -259,11 +333,33 @@ namespace Bizio.App
             _logger.Info($"Logger toggled: {_logger.IsVisible}");
         }
 
-        private void TogglePeopleList(object sender, EventArgs e)
+        private void TogglePeopleList(object sender, EventArgs e) => ToggleContainer("container-people");
+
+        private void ToggleContainer(string name)
         {
-            var container = _resources.Get<StackContainer>("container-people");
+            CloseAllContainers(name);
+
+            var container = _resources.Get<IRenderable>(name);
             container.IsVisible = !container.IsVisible;
-            _logger.Info($"People container toggled: {container.IsVisible}");
+        }
+
+        private void CloseAllContainers(string except = null)
+        {
+            var containerNames = new[]
+            {
+                "container-people",
+                "container-my-company",
+                "container-projects"
+            };
+
+            foreach (var name in containerNames)
+            {
+                if (name == except)
+                {
+                    continue;
+                }
+                _resources.Get<IRenderable>(name).IsVisible = false;
+            }
         }
 
         private void StartNewGame(object sender, EventArgs e)
@@ -273,7 +369,7 @@ namespace Bizio.App
             _logger.Info($"Game ID: {_dataService.CurrentGame.GameId}");
             _logger.Info($"Person count: {_dataService.CurrentGame.People.Count}");
 
-            var peopleContainer = _resources.Get<StackContainer>("container-people");
+            var peopleContainer = _resources.Get<IContainer>("container-people");
 
             foreach (var person in _dataService.CurrentGame.People)
             {
@@ -290,6 +386,42 @@ namespace Bizio.App
                 var founder = _dataService.CurrentGame.People.FirstOrDefault(p => p.Id == company.Founder.PersonId);
                 _logger.Info($"Company {company.Id}: {company.Name} founded by {founder.FirstName} {founder.LastName}");
             }
+
+            _logger.Info($"Project count: {_dataService.CurrentGame.Projects.Count}");
+
+            var projectContainer = _resources.Get<IContainer>("container-projects");
+
+            foreach (var project in _dataService.CurrentGame.Projects)
+            {
+                _logger.Info($"Project {project.Id}: {project.Name}");
+
+                var button = CreateButton(project.Name, 0, 0, 300, 50, (s, e) => ToggleProject(project));
+                projectContainer.AddChild(button);
+            }
+
+            var headlineContainer = _resources.Get<IRenderable>("headline-container");
+            headlineContainer.IsVisible = true;
+
+            UpdateHeadlineContainer();
+        }
+
+        private void ToggleProject(Project project)
+        {
+        }
+
+        private void UpdateHeadlineContainer()
+        {
+            var currentTurnTextBox = _resources.Get<TextBox>("current-turn-textbox");
+            currentTurnTextBox.Text = $"Turn {_dataService.CurrentGame.Turn}";
+
+            var companyNameTextBox = _resources.Get<TextBox>("company-name-textbox");
+            companyNameTextBox.Text = _dataService.CurrentGame.PlayerCompany.Name;
+
+            var companyMoneyTextBox = _resources.Get<TextBox>("company-money-textbox");
+            companyMoneyTextBox.Text = $"${_dataService.CurrentGame.PlayerCompany.Money:0.00}";
+
+            var employeeCountTextBox = _resources.Get<TextBox>("employee-count-textbox");
+            employeeCountTextBox.Text = $"{_dataService.CurrentGame.PlayerCompany.Employees.Count}";
         }
 
         private void TogglePerson(Person person)

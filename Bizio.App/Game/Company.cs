@@ -10,5 +10,6 @@ namespace Bizio.App.Game
         public Employee Founder { get; set; }
         public ICollection<Employee> Employees { get; set; }
         public bool IsPlayerCompany { get; set; }
+        public float Money { get; set; }
     }
 }

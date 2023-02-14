@@ -50,6 +50,35 @@ namespace Bizio.App.Services
                 gameData.Companies.Add(company);
             }
 
+            var projectBatchSize = StaticData.NewGameProjectBatchSize.Random();
+            
+            for (var projectIndex = 0; projectIndex < projectBatchSize; projectIndex++)
+            {
+                var project = new Project
+                {
+                    Id = Guid.NewGuid(),
+                    Name = $"Project {projectIndex + 1}",
+                    Description = $"Description on project {projectIndex + 1}",
+                    TurnDue = gameData.Turn + _r.Next(5, 10),
+                    Value = (float)Math.Round(_r.NextDouble() + .1, 1) * 500f                    
+                };
+
+                var requirementCount = _r.Next(1, StaticData.Skills.Count);
+
+                for (var requirementIndex = 0; requirementIndex < requirementCount; requirementIndex++)
+                {
+                    var requirement = new ProjectRequirement
+                    {
+                        SkillId = StaticData.Skills.Where(s => !project.Requirements.Any(r => r.SkillId == s.Id)).Random().Id,
+                        Amount = (float)Math.Round(_r.NextDouble() + .1, 1) * 100f
+                    };
+
+                    project.Requirements.Add(requirement);
+                }
+
+                gameData.Projects.Add(project);
+            }
+
             CurrentGame = gameData;
         }
 

@@ -19,7 +19,7 @@ namespace Bizio.App.UI
 
         public string Text { get; set; }
 
-        public Vector2 Dimensions => Font?.MeasureString(Text) ?? Vector2.Zero;
+        public Vector2 Dimensions => Font?.MeasureString(Text ?? string.Empty) ?? Vector2.Zero;
 
         public void Render(SpriteBatch renderer)
         {

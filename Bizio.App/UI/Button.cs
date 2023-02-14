@@ -34,7 +34,7 @@ namespace Bizio.App.UI
 
         public void Update()
         {
-            if (!IsEnabled)
+            if (!CanBeClicked())
             {
                 _state = ButtonState.Default;
                 return;
@@ -85,6 +85,22 @@ namespace Bizio.App.UI
             var y = Destination.Center.Y - (textDimensions.Y / 2);
 
             renderer.DrawString(_metadata.Font, Text, new Vector2(x, y), Color.Black);
+        }
+
+        private bool CanBeClicked()
+        {
+            if (!IsEnabled || !IsVisible) return false;
+
+            var p = Parent;
+
+            while (p != null)
+            {
+                if (!p.IsVisible) return false;
+
+                p = p.Parent;
+            }
+
+            return true;
         }
 
         private Rectangle Destination
