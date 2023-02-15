@@ -159,18 +159,7 @@ namespace Bizio.App
             _logger.Info("Initialization complete");
         }
 
-        private void ToggleProjectsList(object sender, EventArgs e) => ToggleContainer("container-projects");
-
-        private void NextTurn(object sender, EventArgs e)
-        {
-            _dataService.CurrentGame.Turn++;
-
-            var currentTurnTextBox = _resources.Get<TextBox>("current-turn-textbox");
-            currentTurnTextBox.IsVisible = true;
-            currentTurnTextBox.Text = $"Turn {_dataService.CurrentGame.Turn}";
-
-            UpdateHeadlineContainer();
-        }
+        // Utilities
 
         private void LogSnapshot(object sender, EventArgs e)
         {
@@ -183,7 +172,139 @@ namespace Bizio.App
             _logger.Info("[END SNAPSHOT]");
         }
 
-        private void ToggleMyCompany(object sender, EventArgs e) => ToggleContainer("container-my-company");
+        private void ToggleDebugInfo(object sender, EventArgs e)
+        {
+            _logger.IsVisible = !_logger.IsVisible;
+            _logger.Info($"Logger toggled: {_logger.IsVisible}");
+        }
+
+        private void CloseAllContainers(string except = null)
+        {
+            var containerNames = new[]
+            {
+                "container-people",
+                "container-my-company",
+                "container-projects"
+            };
+
+            foreach (var name in containerNames)
+            {
+                if (name == except)
+                {
+                    continue;
+                }
+                _resources.Get<IRenderable>(name).IsVisible = false;
+            }
+        }
+
+        private void ToggleContainer(string name)
+        {
+            CloseAllContainers(name);
+
+            var container = _resources.Get<IRenderable>(name);
+            container.IsVisible = !container.IsVisible;
+        }
+
+        // Game state management
+
+        private void StartNewGame(object sender, EventArgs e)
+        {
+            _dataService.InitializeNewGame();
+
+            _logger.Info($"Game ID: {_dataService.CurrentGame.GameId}");
+            _logger.Info($"Person count: {_dataService.CurrentGame.People.Count}");
+
+            var peopleContainer = _resources.Get<IContainer>("container-people");
+
+            foreach (var person in _dataService.CurrentGame.People)
+            {
+                _logger.Info($"Person {person.Id}: {person.FirstName} {person.LastName}, Skills: {person.Skills.Count}");
+
+                var button = CreateButton($"{person.FirstName} {person.LastName}", 0, 0, 300, 50, (s, e) => TogglePerson(person));
+                peopleContainer.AddChild(button);
+            }
+
+            _logger.Info($"Company count: {_dataService.CurrentGame.Companies.Count}");
+
+            foreach (var company in _dataService.CurrentGame.Companies)
+            {
+                var founder = _dataService.CurrentGame.People.FirstOrDefault(p => p.Id == company.Founder.PersonId);
+                _logger.Info($"Company {company.Id}: {company.Name} founded by {founder.FirstName} {founder.LastName}");
+            }
+
+            _logger.Info($"Project count: {_dataService.CurrentGame.Projects.Count}");
+
+            var projectContainer = _resources.Get<IContainer>("container-projects");
+
+            foreach (var project in _dataService.CurrentGame.Projects)
+            {
+                _logger.Info($"Project {project.Id}: {project.Name}");
+
+                var button = CreateButton(project.Name, 0, 0, 300, 50, (s, e) => ToggleProject(project));
+                projectContainer.AddChild(button);
+            }
+
+            var headlineContainer = _resources.Get<IRenderable>("headline-container");
+            headlineContainer.IsVisible = true;
+
+            UpdateHeadlineContainer();
+        }
+
+        private void NextTurn(object sender, EventArgs e)
+        {
+            _dataService.CurrentGame.Turn++;
+
+            var currentTurnTextBox = _resources.Get<TextBox>("current-turn-textbox");
+            currentTurnTextBox.IsVisible = true;
+            currentTurnTextBox.Text = $"Turn {_dataService.CurrentGame.Turn}";
+
+            UpdateHeadlineContainer();
+        }
+
+        private void UpdateHeadlineContainer()
+        {
+            var currentTurnTextBox = _resources.Get<TextBox>("current-turn-textbox");
+            currentTurnTextBox.Text = $"Turn {_dataService.CurrentGame.Turn}";
+
+            var companyNameTextBox = _resources.Get<TextBox>("company-name-textbox");
+            companyNameTextBox.Text = _dataService.CurrentGame.PlayerCompany.Name;
+
+            var companyMoneyTextBox = _resources.Get<TextBox>("company-money-textbox");
+            companyMoneyTextBox.Text = $"${_dataService.CurrentGame.PlayerCompany.Money:0.00}";
+
+            var employeeCountTextBox = _resources.Get<TextBox>("employee-count-textbox");
+            employeeCountTextBox.Text = $"{_dataService.CurrentGame.PlayerCompany.Employees.Count}";
+        }
+
+        // People
+
+        private void TogglePeopleList(object sender, EventArgs e) => ToggleContainer("container-people");
+
+        private void TogglePerson(Person person)
+        {
+            var previousContainer = _resources.Get<VisualContainer>("container-person-details");
+
+            var previousPerson = _resources.Get<Person>("previous-person");
+
+            // TODO: when removing children from the visual tree
+            // check if they are updateable OR have updateable children
+            // and remove those from the logical tree as well
+            // buttons are the current problem. Once created, they exist
+            // 4ever
+            _visualRoot.RemoveChild(previousContainer);
+
+            if (person == null || person == previousPerson)
+            {
+                _resources.Set("previous-person", null);
+                return;
+            }
+
+            _resources.Set("previous-person", person);
+
+            var currentContainer = CreatePersonDetailsContainer(person);
+
+            _visualRoot.AddChild(currentContainer);
+        }
 
         private IRenderable CreatePeopleContainer()
         {
@@ -286,25 +407,6 @@ namespace Bizio.App
             return root;
         }
 
-        private IRenderable CreateProjectsContainer()
-        {
-            var container = new StackContainer
-            {
-                Position = new Vector2(0, 100),
-                Padding = new Vector4(20, 5, 20, 5)
-            };
-            _resources.Set("container-projects", container);
-
-            return container;
-        }
-
-        private IRenderable CreateMyCompanyContainer()
-        {
-            var myCompanyContainer = new VisualContainer();
-            _resources.Set("container-my-company", myCompanyContainer);
-            return myCompanyContainer;
-        }
-
         private void HireCurrentPerson(object sender, EventArgs e)
         {
             var person = _resources.Get<Person>("previous-person");
@@ -327,127 +429,151 @@ namespace Bizio.App
             hireButton.IsEnabled = false;
         }
 
-        private void ToggleDebugInfo(object sender, EventArgs e)
-        {
-            _logger.IsVisible = !_logger.IsVisible;
-            _logger.Info($"Logger toggled: {_logger.IsVisible}");
-        }
+        // Projects
 
-        private void TogglePeopleList(object sender, EventArgs e) => ToggleContainer("container-people");
-
-        private void ToggleContainer(string name)
-        {
-            CloseAllContainers(name);
-
-            var container = _resources.Get<IRenderable>(name);
-            container.IsVisible = !container.IsVisible;
-        }
-
-        private void CloseAllContainers(string except = null)
-        {
-            var containerNames = new[]
-            {
-                "container-people",
-                "container-my-company",
-                "container-projects"
-            };
-
-            foreach (var name in containerNames)
-            {
-                if (name == except)
-                {
-                    continue;
-                }
-                _resources.Get<IRenderable>(name).IsVisible = false;
-            }
-        }
-
-        private void StartNewGame(object sender, EventArgs e)
-        {
-            _dataService.InitializeNewGame();
-
-            _logger.Info($"Game ID: {_dataService.CurrentGame.GameId}");
-            _logger.Info($"Person count: {_dataService.CurrentGame.People.Count}");
-
-            var peopleContainer = _resources.Get<IContainer>("container-people");
-
-            foreach (var person in _dataService.CurrentGame.People)
-            {
-                _logger.Info($"Person {person.Id}: {person.FirstName} {person.LastName}, Skills: {person.Skills.Count}");
-
-                var button = CreateButton($"{person.FirstName} {person.LastName}", 0, 0, 300, 50, (s, e) => TogglePerson(person));
-                peopleContainer.AddChild(button);
-            }
-
-            _logger.Info($"Company count: {_dataService.CurrentGame.Companies.Count}");
-
-            foreach (var company in _dataService.CurrentGame.Companies)
-            {
-                var founder = _dataService.CurrentGame.People.FirstOrDefault(p => p.Id == company.Founder.PersonId);
-                _logger.Info($"Company {company.Id}: {company.Name} founded by {founder.FirstName} {founder.LastName}");
-            }
-
-            _logger.Info($"Project count: {_dataService.CurrentGame.Projects.Count}");
-
-            var projectContainer = _resources.Get<IContainer>("container-projects");
-
-            foreach (var project in _dataService.CurrentGame.Projects)
-            {
-                _logger.Info($"Project {project.Id}: {project.Name}");
-
-                var button = CreateButton(project.Name, 0, 0, 300, 50, (s, e) => ToggleProject(project));
-                projectContainer.AddChild(button);
-            }
-
-            var headlineContainer = _resources.Get<IRenderable>("headline-container");
-            headlineContainer.IsVisible = true;
-
-            UpdateHeadlineContainer();
-        }
+        private void ToggleProjectsList(object sender, EventArgs e) => ToggleContainer("container-projects");
 
         private void ToggleProject(Project project)
         {
-        }
+            var previousContainer = _resources.Get<VisualContainer>("container-project-details");
 
-        private void UpdateHeadlineContainer()
-        {
-            var currentTurnTextBox = _resources.Get<TextBox>("current-turn-textbox");
-            currentTurnTextBox.Text = $"Turn {_dataService.CurrentGame.Turn}";
+            var previousProject = _resources.Get<Project>("previous-project");
 
-            var companyNameTextBox = _resources.Get<TextBox>("company-name-textbox");
-            companyNameTextBox.Text = _dataService.CurrentGame.PlayerCompany.Name;
-
-            var companyMoneyTextBox = _resources.Get<TextBox>("company-money-textbox");
-            companyMoneyTextBox.Text = $"${_dataService.CurrentGame.PlayerCompany.Money:0.00}";
-
-            var employeeCountTextBox = _resources.Get<TextBox>("employee-count-textbox");
-            employeeCountTextBox.Text = $"{_dataService.CurrentGame.PlayerCompany.Employees.Count}";
-        }
-
-        private void TogglePerson(Person person)
-        {
-            var previousContainer = _resources.Get<VisualContainer>("container-person-details");
-
-            var previousPerson = _resources.Get<Person>("previous-person");
-
-            // TODO: when removing children from the visual tree
-            // check if they are updateable OR have updateable children
-            // and remove those from the logical tree as well
-            // buttons are the current problem. Once created, they exist
-            // 4ever
             _visualRoot.RemoveChild(previousContainer);
 
-            if (person == null || person == previousPerson)
+            if (project == null || project == previousProject)
             {
-                _resources.Set("previous-person", null);
+                _resources.Set("previous-project", null);
                 return;
             }
 
-            _resources.Set("previous-person", person);
+            _resources.Set("previous-project", project);
 
-            var currentContainer = CreatePersonDetailsContainer(person);
+            var currentContainer = CreateProjectDetailsContainer(project);
 
             _visualRoot.AddChild(currentContainer);
+        }
+
+        private IRenderable CreateProjectsContainer()
+        {
+            var container = new StackContainer
+            {
+                Position = new Vector2(0, 100),
+                Padding = new Vector4(20, 5, 20, 5)
+            };
+            _resources.Set("container-projects", container);
+
+            return container;
+        }
+
+        private IContainer CreateProjectDetailsContainer(Project project)
+        {
+            var root = new VisualContainer
+            {
+                IsVisible = true,
+                Position = new Vector2(400, 100)
+            };
+
+            _resources.Set("container-project-details", root);
+
+            var font = _resources.Get<SpriteFont>("font-default");
+
+            var nameLabel = new TextBox
+            {
+                IsVisible = true,
+                Position = new Vector2(0, 0),
+                Text = project.Name,
+                Color = Color.Black,
+                Font = font
+            };
+            root.AddChild(nameLabel);
+
+            var descriptionLabel = new TextBox
+            {
+                IsVisible = true,
+                Position = new Vector2(0, 35),
+                Text = project.Description,
+                Color = Color.Black,
+                Font = font
+            };
+            root.AddChild(descriptionLabel);
+
+            var valueLabel = new LabeledTextBox
+            {
+                IsVisible = true,
+                Position = new Vector2(0, 70),
+                Label = "Pays",
+                LabelWidth = 100,
+                Text = $"${project.Value:0.00}",
+                Color = Color.Black,
+                Font = font
+            };
+
+            root.AddChild(valueLabel);
+
+            var dueDateLabel = new LabeledTextBox
+            {
+                IsVisible = true,
+                Position = new Vector2(0, 105),
+                Label = "Due on turn",
+                LabelWidth = 100,
+                Text = $"{project.TurnDue}",
+                Color = Color.Black,
+                Font = font
+            };
+
+            root.AddChild(dueDateLabel);
+
+            var requirementsLabel = new TextBox
+            {
+                IsVisible = true,
+                Position = new Vector2(0, 140),
+                Font = font,
+                Color = Color.Black,
+                Text = $"Requirements ({project.Requirements.Sum(r => r.Amount):0.0})"
+            };
+
+            root.AddChild(requirementsLabel);
+
+            var requirements = new StackContainer
+            {
+                IsVisible = true,
+                Position = new Vector2(50, 175),
+                Direction = LayoutDirection.Vertical,
+                Padding = new Vector4(0, 5, 0, 5)
+            };
+
+            root.AddChild(requirements);
+
+            foreach (var requirement in project.Requirements)
+            {
+                var skill = _dataService.StaticData.Skills.First(s => s.Id == requirement.SkillId);
+
+                var requirementLabel = new LabeledTextBox
+                {
+                    IsVisible = true,
+                    Font = font,
+                    Color = Color.Black,
+                    Label = skill.Name,
+                    LabelWidth = 75,
+                    Text = $"{requirement.Amount:0.0}"
+                };
+
+                requirements.AddChild(requirementLabel);
+            }
+
+            return root;
+        }
+
+        // My Company
+
+        private void ToggleMyCompany(object sender, EventArgs e) => ToggleContainer("container-my-company");
+
+        private IRenderable CreateMyCompanyContainer()
+        {
+            var myCompanyContainer = new VisualContainer();
+            _resources.Set("container-my-company", myCompanyContainer);
+            return myCompanyContainer;
         }
 
         protected override void Update(GameTime gameTime)

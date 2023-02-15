@@ -131,6 +131,7 @@ namespace Bizio.App.Services
             {
                 Id = Guid.NewGuid(),
                 Name = StaticData.CompanyNames.Random(),
+                Money = 1500,
                 Founder = founderEmployee,
                 Employees = new List<Employee>
                 {
