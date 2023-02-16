@@ -70,7 +70,7 @@ namespace Bizio.App.Services
                     var requirement = new ProjectRequirement
                     {
                         SkillId = StaticData.Skills.Where(s => !project.Requirements.Any(r => r.SkillId == s.Id)).Random().Id,
-                        Amount = (float)Math.Round(_r.NextDouble() + .1, 1) * 100f
+                        TargetAmount = (float)Math.Round(_r.NextDouble() + .1, 1) * 100f
                     };
 
                     project.Requirements.Add(requirement);

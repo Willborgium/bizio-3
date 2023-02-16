@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Bizio.App.UI
 {
-    public class StackContainer : VisualContainer
+    public class StackContainer : ContainerBase
     {
         public LayoutDirection Direction { get; set; }
 
@@ -14,22 +14,9 @@ namespace Bizio.App.UI
         {
         }
 
-        public override void Render(SpriteBatch renderer)
-        {
-            foreach (var renderable in _renderables)
-            {
-                if (!renderable.IsVisible)
-                {
-                    continue;
-                }
-
-                renderable.Render(renderer);
-            }
-        }
-
         public override Vector2 GetChildAbsolutePosition(ITranslatable child)
         {
-            var position = Parent?.GetChildAbsolutePosition(this) ?? Position;
+            var position = GetCurrentPosition();
 
             position += new Vector2(Padding.X, Padding.Y);
 
@@ -66,14 +53,14 @@ namespace Bizio.App.UI
             return Vector2.Zero;
         }
 
-        protected override bool TryAddChild(IRenderable child)
+        protected override bool CanAddChild<T>(T child)
         {
             if (child is not IMeasurable)
             {
                 return false;
             }
 
-            return base.TryAddChild(child);
+            return base.CanAddChild(child);
         }
     }
 }

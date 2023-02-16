@@ -6,7 +6,12 @@ using System.ComponentModel.Design.Serialization;
 
 namespace Bizio.App.UI
 {
-    public class Button : IUpdateable, IRenderable, ITranslatable, IMeasurable
+    public interface ILocatable
+    {
+        public string Locator { get; set; }
+    }
+
+    public class Button : IUpdateable, IRenderable, ITranslatable, IMeasurable, ILocatable
     {
         public bool IsVisible { get; set; }
 
@@ -21,6 +26,10 @@ namespace Bizio.App.UI
         public Vector2 Position { get; set; }
 
         public Vector2 Dimensions { get; set; }
+
+        public EventArgs Args { get; set; }
+
+        public string Locator { get; set; }
 
         public event EventHandler Clicked;
 
@@ -54,7 +63,7 @@ namespace Bizio.App.UI
                 {
                     if (_state == ButtonState.Clicked)
                     {
-                        Clicked?.Invoke(this, EventArgs.Empty);
+                        Clicked?.Invoke(this, Args);
                     }
 
                     nextState = ButtonState.Hovered;

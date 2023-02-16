@@ -11,5 +11,12 @@ namespace Bizio.App.Game
         public ICollection<Employee> Employees { get; set; }
         public bool IsPlayerCompany { get; set; }
         public float Money { get; set; }
+        public ICollection<Project> Projects { get; set; }
+
+        public Company()
+        {
+            Employees = new List<Employee>();
+            Projects = new List<Project>();
+        }
     }
 }

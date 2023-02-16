@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace Bizio.App.Game
@@ -11,7 +12,7 @@ namespace Bizio.App.Game
         public ICollection<Person> People { get; }
         public ICollection<Company> Companies { get; }
         public Company PlayerCompany => Companies?.FirstOrDefault(c => c.IsPlayerCompany);
-        public ICollection<Project> Projects { get; }
+        public ObservableCollection<Project> Projects { get; }
 
         public GameData()
         {
@@ -19,7 +20,7 @@ namespace Bizio.App.Game
             Turn = 1;
             People = new List<Person>();
             Companies = new List<Company>();
-            Projects = new List<Project>();
+            Projects = new ObservableCollection<Project>();
         }
     }
 }

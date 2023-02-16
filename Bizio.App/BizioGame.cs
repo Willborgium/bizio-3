@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 
 namespace Bizio.App
@@ -20,9 +21,6 @@ namespace Bizio.App
         private readonly DataService _dataService = new();
         private readonly LoggingService _logger = new();
 
-        private readonly ConcurrentBag<IUpdateable> _updateables;
-        private readonly ICollection<IRenderable> _renderables;
-
         private IContainer _visualRoot;
 
         public BizioGame()
@@ -35,8 +33,6 @@ namespace Bizio.App
 
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
-            _updateables = new ConcurrentBag<IUpdateable>();
-            _renderables = new List<IRenderable>();
         }
 
         protected override void Initialize()
@@ -62,7 +58,6 @@ namespace Bizio.App
             _resources.Set("texture-pixel", pixel);
 
             _logger.Initialize(font, pixel);
-            _renderables.Add(_logger);
 
             var buttonSpritesheet = Content.Load<Texture2D>("greySheet");
             var buttonMetadata = new ButtonMetadata
@@ -133,14 +128,25 @@ namespace Bizio.App
             headlineContainer.AddChild(companyMoney);
             _resources.Set("company-money-textbox", companyMoney);
 
-            var employeeCount = new TextBox
+            var employeeCount = new LabeledTextBox
             {
                 IsVisible = true,
                 Color = Color.Black,
-                Font = font
+                Font = font,
+                Label = "Employees: "
             };
             headlineContainer.AddChild(employeeCount);
             _resources.Set("employee-count-textbox", employeeCount);
+
+            var projectCount = new LabeledTextBox
+            {
+                IsVisible = true,
+                Color = Color.Black,
+                Font = font,
+                Label = "Projects: "
+            };
+            headlineContainer.AddChild(projectCount);
+            _resources.Set("project-count-textbox", projectCount);
 
             var nextTurnButton = CreateButton("Next Turn", 0, 0, 200, 50, NextTurn);
             _resources.Set("next-turn-button", nextTurnButton);
@@ -163,8 +169,8 @@ namespace Bizio.App
 
         private void LogSnapshot(object sender, EventArgs e)
         {
-            var renderableCount = _visualRoot.GetChildCount(true);
-            var updateableCount = _updateables.Count;
+            var renderableCount = _visualRoot.GetChildCount<IRenderable>(true);
+            var updateableCount = _visualRoot.GetChildCount<IUpdateable>(true);
 
             _logger.Info("[BEGIN SNAPSHOT]");
             _logger.Info($"Renderables: {renderableCount}");
@@ -216,6 +222,7 @@ namespace Bizio.App
 
             var peopleContainer = _resources.Get<IContainer>("container-people");
 
+            // Convert to method
             foreach (var person in _dataService.CurrentGame.People)
             {
                 _logger.Info($"Person {person.Id}: {person.FirstName} {person.LastName}, Skills: {person.Skills.Count}");
@@ -238,11 +245,10 @@ namespace Bizio.App
 
             foreach (var project in _dataService.CurrentGame.Projects)
             {
-                _logger.Info($"Project {project.Id}: {project.Name}");
-
-                var button = CreateButton(project.Name, 0, 0, 300, 50, (s, e) => ToggleProject(project));
-                projectContainer.AddChild(button);
+                AddProject(project, projectContainer);
             }
+
+            _dataService.CurrentGame.Projects.CollectionChanged += OnProjectsChanged;
 
             var headlineContainer = _resources.Get<IRenderable>("headline-container");
             headlineContainer.IsVisible = true;
@@ -272,8 +278,52 @@ namespace Bizio.App
             var companyMoneyTextBox = _resources.Get<TextBox>("company-money-textbox");
             companyMoneyTextBox.Text = $"${_dataService.CurrentGame.PlayerCompany.Money:0.00}";
 
-            var employeeCountTextBox = _resources.Get<TextBox>("employee-count-textbox");
+            var employeeCountTextBox = _resources.Get<LabeledTextBox>("employee-count-textbox");
             employeeCountTextBox.Text = $"{_dataService.CurrentGame.PlayerCompany.Employees.Count}";
+
+            var projectCountTextBox = _resources.Get<LabeledTextBox>("project-count-textbox");
+            projectCountTextBox.Text = $"{_dataService.CurrentGame.PlayerCompany.Projects.Count}";
+        }
+
+        // Projects
+
+        private void OnProjectsChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            var projectContainer = _resources.Get<IContainer>("container-projects");
+
+            if (e.OldItems != null)
+            {
+                foreach (Project project in e.OldItems)
+                {
+                    _logger.Info($"Removing project {project.Id}: {project.Name}");
+                    RemoveProject(project, projectContainer);
+                }
+            }
+
+            if (e.NewItems != null)
+            {
+                foreach (Project project in e.NewItems)
+                {
+                    _logger.Info($"Adding project {project.Id}: {project.Name}");
+                    AddProject(project, projectContainer);
+                }
+            }
+
+            var details = _resources.Get<IContainer>("container-project-details");
+            details.IsVisible = false;
+        }
+
+        private void AddProject(Project project, IContainer container)
+        {
+            var button = CreateButton(project.Name, 0, 0, 300, 50, (s, e) => ToggleProject(project));
+            button.Locator = $"project-accept-button-{project.Id}";
+            container.AddChild(button);
+        }
+
+        private static void RemoveProject(Project project, IContainer container)
+        {
+            var child = container.FindChild($"project-accept-button-{project.Id}");
+            container.RemoveChild(child);
         }
 
         // People
@@ -327,7 +377,6 @@ namespace Bizio.App
             };
 
             _resources.Set("container-person-details", root);
-            _renderables.Add(root);
 
             var font = _resources.Get<SpriteFont>("font-default");
 
@@ -524,13 +573,17 @@ namespace Bizio.App
 
             root.AddChild(dueDateLabel);
 
+            var acceptButton = CreateButton("Accept", 0, 140, 300, 50, OnAcceptProject, new DataEventArgs<Project>(project));
+
+            root.AddChild(acceptButton);
+
             var requirementsLabel = new TextBox
             {
                 IsVisible = true,
-                Position = new Vector2(0, 140),
+                Position = new Vector2(0, 200),
                 Font = font,
                 Color = Color.Black,
-                Text = $"Requirements ({project.Requirements.Sum(r => r.Amount):0.0})"
+                Text = $"Requirements ({project.Requirements.Sum(r => r.TargetAmount):0.0})"
             };
 
             root.AddChild(requirementsLabel);
@@ -538,7 +591,7 @@ namespace Bizio.App
             var requirements = new StackContainer
             {
                 IsVisible = true,
-                Position = new Vector2(50, 175),
+                Position = new Vector2(50, 235),
                 Direction = LayoutDirection.Vertical,
                 Padding = new Vector4(0, 5, 0, 5)
             };
@@ -556,13 +609,21 @@ namespace Bizio.App
                     Color = Color.Black,
                     Label = skill.Name,
                     LabelWidth = 75,
-                    Text = $"{requirement.Amount:0.0}"
+                    Text = $"{requirement.TargetAmount:0.0}"
                 };
 
                 requirements.AddChild(requirementLabel);
             }
 
             return root;
+        }
+
+        private void OnAcceptProject(object sender, EventArgs e)
+        {
+            var project = (e as DataEventArgs<Project>).Data;
+
+            _dataService.CurrentGame.Projects.Remove(project);
+            _dataService.CurrentGame.PlayerCompany.Projects.Add(project);
         }
 
         // My Company
@@ -583,10 +644,7 @@ namespace Bizio.App
                 Exit();
             }
 
-            foreach (var updateable in _updateables)
-            {
-                updateable.Update();
-            }
+            _visualRoot.Update();
 
             base.Update(gameTime);
         }
@@ -604,7 +662,7 @@ namespace Bizio.App
             base.Draw(gameTime);
         }
 
-        private Button CreateButton(string text, int x, int y, int width, int height, EventHandler handler)
+        private Button CreateButton(string text, int x, int y, int width, int height, EventHandler handler, EventArgs args = null)
         {
             var metadata = _resources.Get<ButtonMetadata>("button-metadata-default");
 
@@ -612,12 +670,11 @@ namespace Bizio.App
             {
                 Text = text,
                 Position = new Vector2(x, y),
-                Dimensions = new Vector2(width, height)
+                Dimensions = new Vector2(width, height),
+                Args = args ?? EventArgs.Empty
             };
 
             button.Clicked += handler;
-
-            _updateables.Add(button);
 
             return button;
         }
