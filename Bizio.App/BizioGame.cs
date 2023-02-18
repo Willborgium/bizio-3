@@ -17,7 +17,10 @@ namespace Bizio.App
 
         private readonly ResourceService _resources = new();
         private readonly DataService _dataService = new();
-        private readonly LoggingService _logger = new();
+        private readonly LoggingService _logger = new()
+        {
+            IsVisible = true,
+        };
 
         private IContainer _visualRoot;
 
@@ -71,32 +74,49 @@ namespace Bizio.App
             _resources.Set("button-spritesheet-default", buttonSpritesheet);
             _resources.Set("button-metadata-default", buttonMetadata);
 
-            var sampleContainer = new StackContainer
+            var debugContainer = new StackContainer
             {
                 Position = new Vector2(1700, 50),
                 Padding = Vector4.One * 10,
                 Direction = LayoutDirection.Vertical
             };
-            _visualRoot.AddChild(sampleContainer);
+            _visualRoot.AddChild(debugContainer);
 
-            _logger.IsVisible = false;
+            debugContainer.AddChild(CreateButton("Logger", 0, 0, 200, 50, ToggleDebugInfo));
+            debugContainer.AddChild(CreateButton("Snapshot", 0, 0, 200, 50, LogSnapshot));
+            debugContainer.AddChild(CreateButton("New Game", 0, 0, 200, 50, StartNewGame));
+            debugContainer.AddChild(CreateButton("My Company", 0, 0, 200, 50, ToggleMyCompany));
+            debugContainer.AddChild(CreateButton("People", 0, 0, 200, 50, TogglePeopleList));
+            debugContainer.AddChild(CreateButton("Projects", 0, 0, 200, 50, ToggleProjectsList));
 
-            sampleContainer.AddChild(CreateButton("Logger", 0, 0, 200, 50, ToggleDebugInfo));
-            sampleContainer.AddChild(CreateButton("Snapshot", 0, 0, 200, 50, LogSnapshot));
-            sampleContainer.AddChild(CreateButton("New Game", 0, 0, 200, 50, StartNewGame));
-            sampleContainer.AddChild(CreateButton("My Company", 0, 0, 200, 50, ToggleMyCompany));
-            sampleContainer.AddChild(CreateButton("People", 0, 0, 200, 50, TogglePeopleList));
-            sampleContainer.AddChild(CreateButton("Projects", 0, 0, 200, 50, ToggleProjectsList));
+            _visualRoot.AddChild(CreateHeadlineContainer());
+            _visualRoot.AddChild(CreatePeopleContainer());
+            _visualRoot.AddChild(CreateProjectsContainer());
+            _visualRoot.AddChild(CreateMyCompanyContainer());
+            _visualRoot.AddChild(CreateMyCompanyProjectsContainer());
+            _visualRoot.AddChild(CreateMyCompanyEmployeesContainer());
 
-            var headlineContainer = new StackContainer
+            CloseAllContainers();
+
+            _dataService.Initialize();
+
+            _logger.Info($"Skill count: {_dataService.StaticData.Skills.Count}");
+
+            _logger.Info("Initialization complete");
+        }
+
+        private IContainer CreateHeadlineContainer()
+        {
+            var font = _resources.Get<SpriteFont>("font-default");
+
+            var container = new StackContainer
             {
                 Position = new Vector2(500, 0),
                 IsVisible = false,
                 Padding = new Vector4(50, 20, 50, 20),
                 Direction = LayoutDirection.Horizontal
             };
-            _visualRoot.AddChild(headlineContainer);
-            _resources.Set("headline-container", headlineContainer);
+            _resources.Set("headline-container", container);
 
             var currentTurn = new TextBox
             {
@@ -104,7 +124,7 @@ namespace Bizio.App
                 Color = Color.Black,
                 Font = font
             };
-            headlineContainer.AddChild(currentTurn);
+            container.AddChild(currentTurn);
             _resources.Set("current-turn-textbox", currentTurn);
 
             var companyName = new TextBox
@@ -114,7 +134,7 @@ namespace Bizio.App
                 Font = font,
 
             };
-            headlineContainer.AddChild(companyName);
+            container.AddChild(companyName);
             _resources.Set("company-name-textbox", companyName);
 
             var companyMoney = new TextBox
@@ -123,7 +143,7 @@ namespace Bizio.App
                 Color = Color.Black,
                 Font = font
             };
-            headlineContainer.AddChild(companyMoney);
+            container.AddChild(companyMoney);
             _resources.Set("company-money-textbox", companyMoney);
 
             var employeeCount = new LabeledTextBox
@@ -133,7 +153,7 @@ namespace Bizio.App
                 Font = font,
                 Label = "Employees: "
             };
-            headlineContainer.AddChild(employeeCount);
+            container.AddChild(employeeCount);
             _resources.Set("employee-count-textbox", employeeCount);
 
             var projectCount = new LabeledTextBox
@@ -143,25 +163,14 @@ namespace Bizio.App
                 Font = font,
                 Label = "Projects: "
             };
-            headlineContainer.AddChild(projectCount);
+            container.AddChild(projectCount);
             _resources.Set("project-count-textbox", projectCount);
 
             var nextTurnButton = CreateButton("Next Turn", 0, 0, 200, 50, NextTurn);
             _resources.Set("next-turn-button", nextTurnButton);
-            headlineContainer.AddChild(nextTurnButton);
+            container.AddChild(nextTurnButton);
 
-            _visualRoot.AddChild(CreatePeopleContainer());
-            _visualRoot.AddChild(CreateProjectsContainer());
-            _visualRoot.AddChild(CreateMyCompanyContainer());
-            _visualRoot.AddChild(CreateMyCompanyProjectsContainer());
-
-            CloseAllContainers();
-
-            _dataService.Initialize();
-
-            _logger.Info($"Skill count: {_dataService.StaticData.Skills.Count}");
-
-            _logger.Info("Initialization complete");
+            return container;
         }
 
         // Utilities
@@ -190,6 +199,8 @@ namespace Bizio.App
             "container-projects",
             "container-project-details",
             "container-my-company",
+            "container-my-company-employees",
+            "container-my-company-employee-details",
             "container-my-company-projects",
             "container-my-company-project-details",
         };
@@ -260,9 +271,12 @@ namespace Bizio.App
             _dataService.CurrentGame.Projects.CollectionChanged += OnProjectsChanged;
 
             _dataService.CurrentGame.PlayerCompany.Projects.CollectionChanged += OnCompanyProjectsChanged;
+            _dataService.CurrentGame.PlayerCompany.Employees.CollectionChanged += OnCompanyEmployeesChanged;
 
             var headlineContainer = _resources.Get<IRenderable>("headline-container");
             headlineContainer.IsVisible = true;
+
+            (sender as Button).IsEnabled = false;
 
             UpdateHeadlineContainer();
         }
@@ -652,6 +666,9 @@ namespace Bizio.App
 
             myCompanyContainer.AddChild(buttonsContainer);
 
+            var employeesButton = CreateButton("Employees", ToggleCompanyEmployees);
+            buttonsContainer.AddChild(employeesButton);
+
             var projectsButton = CreateButton("Projects", ToggleCompanyProjects);
             buttonsContainer.AddChild(projectsButton);
 
@@ -670,7 +687,21 @@ namespace Bizio.App
             return container;
         }
 
+        private IContainer CreateMyCompanyEmployeesContainer()
+        {
+            var container = new StackContainer
+            {
+                Position = new Vector2(400, 100),
+                Direction = LayoutDirection.Vertical,
+                Padding = new Vector4(0, 5, 0, 5)
+            };
+            _resources.Set("container-my-company-employees", container);
+            return container;
+        }
+
         private void ToggleCompanyProjects(object sender, EventArgs e) => ToggleContainer("container-my-company-projects", "container-my-company");
+
+        private void ToggleCompanyEmployees(object sender, EventArgs e) => ToggleContainer("container-my-company-employees", "container-my-company");
 
         private void ToggleCompanyProject(object sender, DataEventArgs<Project> args)
         {
@@ -690,6 +721,28 @@ namespace Bizio.App
             _resources.Set("previous-my-company-project", args.Data);
 
             var currentContainer = CreateCompanyProjectDetailsContainer(args.Data);
+
+            _visualRoot.AddChild(currentContainer);
+        }
+
+        private void ToggleCompanyEmployee(object sender, DataEventArgs<Employee> args)
+        {
+            var previousContainer = _resources.Get<VisualContainer>("container-my-company-employee-details");
+
+            var previousEmployee = _resources.Get<Employee>("previous-my-company-employee");
+
+            _visualRoot.RemoveChild(previousContainer);
+
+            if (args.Data == null || args.Data == previousEmployee)
+            {
+                _resources.Set("previous-my-company-employee", null);
+                _resources.Set("container-my-company-employee-details", null);
+                return;
+            }
+
+            _resources.Set("previous-my-company-employee", args.Data);
+
+            var currentContainer = CreateCompanyEmployeeDetailsContainer(args.Data);
 
             _visualRoot.AddChild(currentContainer);
         }
@@ -715,6 +768,33 @@ namespace Bizio.App
                     _logger.Info($"Adding player project {project.Id}: {project.Name}");
                     var button = CreateButton(project.Name, ToggleCompanyProject, new DataEventArgs<Project>(project));
                     button.Locator = $"my-company-view-project-{project.Id}";
+                    container.AddChild(button);
+                }
+            }
+        }
+
+        private void OnCompanyEmployeesChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            var container = _resources.Get<IContainer>("container-my-company-employees");
+
+            if (e.OldItems != null)
+            {
+                foreach (Employee employee in e.OldItems)
+                {
+                    _logger.Info($"Removing player employee {employee.PersonId}");
+                    var child = container.FindChild($"my-company-view-employee-{employee.PersonId}");
+                    container.RemoveChild(child);
+                }
+            }
+
+            if (e.NewItems != null)
+            {
+                foreach (Employee employee in e.NewItems)
+                {
+                    _logger.Info($"Adding player employee {employee.PersonId}");
+                    var person = _dataService.CurrentGame.People.First(p => p.Id == employee.PersonId);
+                    var button = CreateButton(person.FullName, ToggleCompanyEmployee, new DataEventArgs<Employee>(employee));
+                    button.Locator = $"my-company-view-project-{employee.PersonId}";
                     container.AddChild(button);
                 }
             }
@@ -814,6 +894,86 @@ namespace Bizio.App
                 };
 
                 requirements.AddChild(requirementLabel);
+            }
+
+            return root;
+        }
+
+        private IContainer CreateCompanyEmployeeDetailsContainer(Employee employee)
+        {
+            var root = new VisualContainer
+            {
+                IsVisible = true,
+                Position = new Vector2(800, 100)
+            };
+
+            _resources.Set("container-my-company-employee-details", root);
+
+            var font = _resources.Get<SpriteFont>("font-default");
+
+            var person = _dataService.CurrentGame.People.First(p => p.Id == employee.PersonId);
+
+            var nameLabel = new TextBox
+            {
+                IsVisible = true,
+                Position = new Vector2(0, 0),
+                Text = person.FullName,
+                Color = Color.Black,
+                Font = font
+            };
+            root.AddChild(nameLabel);
+
+            // Gender
+            var genderLabel = new LabeledTextBox
+            {
+                IsVisible = true,
+                Font = font,
+                Color = Color.Black,
+                Position = new Vector2(0, 50),
+                Label = "Gender",
+                LabelWidth = 75,
+                Text = $"{person.Gender}"
+            };
+
+            root.AddChild(genderLabel);
+
+            // Skills
+            var skillsLabel = new TextBox
+            {
+                IsVisible = true,
+                Font = font,
+                Color = Color.Black,
+                Position = new Vector2(0, 100),
+                Text = "Skills"
+            };
+
+            root.AddChild(skillsLabel);
+
+            var skillsContainer = new StackContainer
+            {
+                IsVisible = true,
+                Position = new Vector2(75, 150),
+                Direction = LayoutDirection.Vertical,
+                Padding = new Vector4(0, 5, 0, 5)
+            };
+            root.AddChild(skillsContainer);
+
+            foreach (var personSkill in person.Skills.OrderByDescending(s => s.Value))
+            {
+                var skill = _dataService.StaticData.Skills.First(s => s.Id == personSkill.SkillId);
+
+                var skillLabel = new LabeledTextBox
+                {
+                    IsVisible = true,
+                    Font = font,
+                    Color = Color.Black,
+                    Position = new Vector2(0, 0),
+                    Label = skill.Name,
+                    LabelWidth = 50,
+                    Text = $"{personSkill.Value:0.0}"
+                };
+
+                skillsContainer.AddChild(skillLabel);
             }
 
             return root;
