@@ -127,17 +127,17 @@ namespace Bizio.App.Services
                 Salary = 0
             };
 
-            return new Company
+            var company =  new Company
             {
                 Id = Guid.NewGuid(),
                 Name = StaticData.CompanyNames.Random(),
                 Money = 1500,
-                Founder = founderEmployee,
-                Employees = new List<Employee>
-                {
-                    founderEmployee
-                }
+                Founder = founderEmployee
             };
+
+            company.Employees.Add(founderEmployee);
+
+            return company;
         }
 
         private static T LoadDataFromFile<T>(string path)

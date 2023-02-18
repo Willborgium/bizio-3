@@ -5,8 +5,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 
@@ -114,7 +112,7 @@ namespace Bizio.App
                 IsVisible = true,
                 Color = Color.Black,
                 Font = font,
-                
+
             };
             headlineContainer.AddChild(companyName);
             _resources.Set("company-name-textbox", companyName);
@@ -155,6 +153,7 @@ namespace Bizio.App
             _visualRoot.AddChild(CreatePeopleContainer());
             _visualRoot.AddChild(CreateProjectsContainer());
             _visualRoot.AddChild(CreateMyCompanyContainer());
+            _visualRoot.AddChild(CreateMyCompanyProjectsContainer());
 
             CloseAllContainers();
 
@@ -184,28 +183,38 @@ namespace Bizio.App
             _logger.Info($"Logger toggled: {_logger.IsVisible}");
         }
 
-        private void CloseAllContainers(string except = null)
+        private static readonly string[] ContainerNames = new[]
         {
-            var containerNames = new[]
-            {
-                "container-people",
-                "container-my-company",
-                "container-projects"
-            };
+            "container-people",
+            "container-person-details",
+            "container-projects",
+            "container-project-details",
+            "container-my-company",
+            "container-my-company-projects",
+            "container-my-company-project-details",
+        };
 
-            foreach (var name in containerNames)
+        private void CloseAllContainers(params string[] except)
+        {
+            foreach (var name in ContainerNames)
             {
-                if (name == except)
+                if (except?.Contains(name) == true)
                 {
                     continue;
                 }
-                _resources.Get<IRenderable>(name).IsVisible = false;
+
+                var renderable = _resources.Get<IRenderable>(name);
+
+                if (renderable != null)
+                {
+                    renderable.IsVisible = false;
+                }   
             }
         }
 
-        private void ToggleContainer(string name)
+        private void ToggleContainer(string name, params string[] except)
         {
-            CloseAllContainers(name);
+            CloseAllContainers(except.Append(name).ToArray());
 
             var container = _resources.Get<IRenderable>(name);
             container.IsVisible = !container.IsVisible;
@@ -249,6 +258,8 @@ namespace Bizio.App
             }
 
             _dataService.CurrentGame.Projects.CollectionChanged += OnProjectsChanged;
+
+            _dataService.CurrentGame.PlayerCompany.Projects.CollectionChanged += OnCompanyProjectsChanged;
 
             var headlineContainer = _resources.Get<IRenderable>("headline-container");
             headlineContainer.IsVisible = true;
@@ -315,7 +326,7 @@ namespace Bizio.App
 
         private void AddProject(Project project, IContainer container)
         {
-            var button = CreateButton(project.Name, 0, 0, 300, 50, (s, e) => ToggleProject(project));
+            var button = CreateButton(project.Name, ToggleProject, new DataEventArgs<Project>(project));
             button.Locator = $"project-accept-button-{project.Id}";
             container.AddChild(button);
         }
@@ -333,19 +344,14 @@ namespace Bizio.App
         private void TogglePerson(Person person)
         {
             var previousContainer = _resources.Get<VisualContainer>("container-person-details");
-
             var previousPerson = _resources.Get<Person>("previous-person");
 
-            // TODO: when removing children from the visual tree
-            // check if they are updateable OR have updateable children
-            // and remove those from the logical tree as well
-            // buttons are the current problem. Once created, they exist
-            // 4ever
             _visualRoot.RemoveChild(previousContainer);
 
             if (person == null || person == previousPerson)
             {
                 _resources.Set("previous-person", null);
+                _resources.Set("container-person-details", null);
                 return;
             }
 
@@ -373,7 +379,7 @@ namespace Bizio.App
             var root = new VisualContainer
             {
                 IsVisible = true,
-                Position = new Vector2(400, 0)
+                Position = new Vector2(400, 100)
             };
 
             _resources.Set("container-person-details", root);
@@ -482,7 +488,7 @@ namespace Bizio.App
 
         private void ToggleProjectsList(object sender, EventArgs e) => ToggleContainer("container-projects");
 
-        private void ToggleProject(Project project)
+        private void ToggleProject(object sender, DataEventArgs<Project> args)
         {
             var previousContainer = _resources.Get<VisualContainer>("container-project-details");
 
@@ -490,15 +496,16 @@ namespace Bizio.App
 
             _visualRoot.RemoveChild(previousContainer);
 
-            if (project == null || project == previousProject)
+            if (args.Data == null || args.Data == previousProject)
             {
                 _resources.Set("previous-project", null);
+                _resources.Set("container-project-details", null);
                 return;
             }
 
-            _resources.Set("previous-project", project);
+            _resources.Set("previous-project", args.Data);
 
-            var currentContainer = CreateProjectDetailsContainer(project);
+            var currentContainer = CreateProjectDetailsContainer(args.Data);
 
             _visualRoot.AddChild(currentContainer);
         }
@@ -634,8 +641,185 @@ namespace Bizio.App
         {
             var myCompanyContainer = new VisualContainer();
             _resources.Set("container-my-company", myCompanyContainer);
+
+            var buttonsContainer = new StackContainer
+            {
+                IsVisible = true,
+                Position = new Vector2(0, 100),
+                Direction = LayoutDirection.Vertical,
+                Padding = new Vector4(0, 5, 0, 5)
+            };
+
+            myCompanyContainer.AddChild(buttonsContainer);
+
+            var projectsButton = CreateButton("Projects", ToggleCompanyProjects);
+            buttonsContainer.AddChild(projectsButton);
+
             return myCompanyContainer;
         }
+
+        private IContainer CreateMyCompanyProjectsContainer()
+        {
+            var container = new StackContainer
+            {
+                Position = new Vector2(400, 100),
+                Direction = LayoutDirection.Vertical,
+                Padding = new Vector4(0, 5, 0, 5)
+            };
+            _resources.Set("container-my-company-projects", container);
+            return container;
+        }
+
+        private void ToggleCompanyProjects(object sender, EventArgs e) => ToggleContainer("container-my-company-projects", "container-my-company");
+
+        private void ToggleCompanyProject(object sender, DataEventArgs<Project> args)
+        {
+            var previousContainer = _resources.Get<VisualContainer>("container-my-company-project-details");
+
+            var previousProject = _resources.Get<Project>("previous-my-company-project");
+
+            _visualRoot.RemoveChild(previousContainer);
+
+            if (args.Data == null || args.Data == previousProject)
+            {
+                _resources.Set("previous-my-company-project", null);
+                _resources.Set("container-my-company-project-details", null);
+                return;
+            }
+
+            _resources.Set("previous-my-company-project", args.Data);
+
+            var currentContainer = CreateCompanyProjectDetailsContainer(args.Data);
+
+            _visualRoot.AddChild(currentContainer);
+        }
+
+        private void OnCompanyProjectsChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            var container = _resources.Get<IContainer>("container-my-company-projects");
+
+            if (e.OldItems != null)
+            {
+                foreach (Project project in e.OldItems)
+                {
+                    _logger.Info($"Removing player project {project.Id}: {project.Name}");
+                    var child = container.FindChild($"my-company-view-project-{project.Id}");
+                    container.RemoveChild(child);
+                }
+            }
+
+            if (e.NewItems != null)
+            {
+                foreach (Project project in e.NewItems)
+                {
+                    _logger.Info($"Adding player project {project.Id}: {project.Name}");
+                    var button = CreateButton(project.Name, ToggleCompanyProject, new DataEventArgs<Project>(project));
+                    button.Locator = $"my-company-view-project-{project.Id}";
+                    container.AddChild(button);
+                }
+            }
+        }
+
+        private IContainer CreateCompanyProjectDetailsContainer(Project project)
+        {
+            var root = new VisualContainer
+            {
+                IsVisible = true,
+                Position = new Vector2(800, 100)
+            };
+
+            _resources.Set("container-my-company-project-details", root);
+
+            var font = _resources.Get<SpriteFont>("font-default");
+
+            var nameLabel = new TextBox
+            {
+                IsVisible = true,
+                Position = new Vector2(0, 0),
+                Text = project.Name,
+                Color = Color.Black,
+                Font = font
+            };
+            root.AddChild(nameLabel);
+
+            var descriptionLabel = new TextBox
+            {
+                IsVisible = true,
+                Position = new Vector2(0, 35),
+                Text = project.Description,
+                Color = Color.Black,
+                Font = font
+            };
+            root.AddChild(descriptionLabel);
+
+            var valueLabel = new LabeledTextBox
+            {
+                IsVisible = true,
+                Position = new Vector2(0, 70),
+                Label = "Pays",
+                LabelWidth = 100,
+                Text = $"${project.Value:0.00}",
+                Color = Color.Black,
+                Font = font
+            };
+
+            root.AddChild(valueLabel);
+
+            var dueDateLabel = new LabeledTextBox
+            {
+                IsVisible = true,
+                Position = new Vector2(0, 105),
+                Label = "Due on turn",
+                LabelWidth = 100,
+                Text = $"{project.TurnDue}",
+                Color = Color.Black,
+                Font = font
+            };
+
+            root.AddChild(dueDateLabel);
+
+            var requirementsLabel = new TextBox
+            {
+                IsVisible = true,
+                Position = new Vector2(0, 200),
+                Font = font,
+                Color = Color.Black,
+                Text = $"Requirements ({project.Requirements.Sum(r => r.TargetAmount):0.0})"
+            };
+
+            root.AddChild(requirementsLabel);
+
+            var requirements = new StackContainer
+            {
+                IsVisible = true,
+                Position = new Vector2(50, 235),
+                Direction = LayoutDirection.Vertical,
+                Padding = new Vector4(0, 5, 0, 5)
+            };
+
+            root.AddChild(requirements);
+
+            foreach (var requirement in project.Requirements)
+            {
+                var skill = _dataService.StaticData.Skills.First(s => s.Id == requirement.SkillId);
+
+                var requirementLabel = new LabeledTextBox
+                {
+                    IsVisible = true,
+                    Font = font,
+                    Color = Color.Black,
+                    Label = skill.Name,
+                    LabelWidth = 75,
+                    Text = $"{requirement.TargetAmount:0.0}"
+                };
+
+                requirements.AddChild(requirementLabel);
+            }
+
+            return root;
+        }
+
+        // Core
 
         protected override void Update(GameTime gameTime)
         {
@@ -677,6 +861,17 @@ namespace Bizio.App
             button.Clicked += handler;
 
             return button;
+        }
+
+        private Button CreateButton<T>(string text, EventHandler<T> handler, T args = null)
+            where T : EventArgs
+        {
+            return CreateButton(text, 0, 0, 300, 50, (s, e) => handler?.Invoke(s, e as T), args);
+        }
+
+        private Button CreateButton(string text, EventHandler handler, EventArgs args = null)
+        {
+            return CreateButton(text, 0, 0, 300, 50, handler, args);
         }
     }
 }

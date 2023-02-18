@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace Bizio.App.Services
 {
@@ -12,7 +11,7 @@ namespace Bizio.App.Services
                 return (T)_resources[key];
             }
 
-            return default(T);
+            return default;
         }
 
         public void Set<T>(string key, T resource)
