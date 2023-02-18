@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using System;
 
 namespace Bizio.App.UI
 {
@@ -10,5 +11,6 @@ namespace Bizio.App.UI
         int GetChildCount<T>(bool isRecursive);
         ILocatable FindChild(string locator);
         Vector2 GetChildAbsolutePosition(ITranslatable child);
+        event EventHandler ChildrenChanged;
     }
 }

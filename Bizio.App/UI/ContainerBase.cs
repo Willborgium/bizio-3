@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Bizio.App.UI
 {
-    public abstract class ContainerBase : IContainer
+    public abstract class ContainerBase : IContainer, IMeasurable, ITranslatable
     {
         public bool IsVisible { get; set; }
 
@@ -16,6 +16,10 @@ namespace Bizio.App.UI
         public IContainer Parent { get; set; }
 
         public Vector2 Position { get; set; }
+
+        public Vector2 Dimensions => _dimensions;
+
+        public event EventHandler ChildrenChanged;
 
         public ContainerBase()
         {
@@ -30,16 +34,6 @@ namespace Bizio.App.UI
             }
 
             var didAddChild = false;
-
-            if (child is ITranslatable t)
-            {
-                if (t.Parent != null)
-                {
-                    throw new InvalidOperationException("A translateable can only have one parent");
-                }
-
-                t.Parent = this;
-            }
 
             if (child is IRenderable r)
             {
@@ -70,7 +64,31 @@ namespace Bizio.App.UI
                 throw new InvalidOperationException($"Did not add child of type '{child?.GetType()}' to container of type '{GetType()}' because it is neither renderable nor updateable");
             }
 
+            if (child is ITranslatable t)
+            {
+                if (t.Parent != null)
+                {
+                    throw new InvalidOperationException("A translateable can only have one parent");
+                }
+
+                t.Parent = this;
+            }
+
+            if (child is IContainer c)
+            {
+                c.ChildrenChanged += OnNestedChildrenChanged;
+            }
+
             _children.Add(child);
+
+            Measure();
+
+            ChildrenChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void OnNestedChildrenChanged(object sender, EventArgs e)
+        {
+            Measure();
         }
 
         protected virtual bool CanAddChild<T>(T child)
@@ -106,6 +124,15 @@ namespace Bizio.App.UI
             {
                 t.Parent = null;
             }
+
+            if (child is IContainer c)
+            {
+                c.ChildrenChanged -= OnNestedChildrenChanged;
+            }
+
+            Measure();
+
+            ChildrenChanged?.Invoke(this, EventArgs.Empty);
         }
 
         public ILocatable FindChild(string locator)
@@ -180,6 +207,55 @@ namespace Bizio.App.UI
         {
             return Parent?.GetChildAbsolutePosition(this) ?? Position;
         }
+
+        private void Measure()
+        {
+            var currentPosition = GetCurrentPosition();
+            float minX = currentPosition.X;
+            float maxX = currentPosition.X;
+            float minY = currentPosition.Y;
+            float maxY = currentPosition.Y;
+
+            foreach (var child in _children)
+            {
+                var position = currentPosition;
+
+                if (child is ITranslatable t)
+                {
+                    position = GetChildAbsolutePosition(t);
+                }
+
+                if (minX > position.X)
+                {
+                    minX = position.X;
+                }
+
+                if (minY > position.Y)
+                {
+                    minY = position.Y;
+                }
+
+                if (child is IMeasurable m)
+                {
+                    var right = position.X + m.Dimensions.X;
+                    var bottom = position.Y + m.Dimensions.Y;
+
+                    if (right > maxX)
+                    {
+                        maxX = right;
+                    }
+
+                    if (bottom > maxY)
+                    {
+                        maxY = bottom;
+                    }
+                }
+            }
+
+            _dimensions = new Vector2(maxX - minX, maxY - minY);
+        }
+
+        private Vector2 _dimensions;
 
         protected readonly ICollection<object> _children = new HashSet<object>();
         protected readonly ICollection<IRenderable> _renderables = new HashSet<IRenderable>();

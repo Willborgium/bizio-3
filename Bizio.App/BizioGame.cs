@@ -357,7 +357,7 @@ namespace Bizio.App
 
         private void TogglePerson(Person person)
         {
-            var previousContainer = _resources.Get<VisualContainer>("container-person-details");
+            var previousContainer = _resources.Get<IContainer>("container-person-details");
             var previousPerson = _resources.Get<Person>("previous-person");
 
             _visualRoot.RemoveChild(previousContainer);
@@ -390,10 +390,11 @@ namespace Bizio.App
 
         private IRenderable CreatePersonDetailsContainer(Person person)
         {
-            var root = new VisualContainer
+            var root = new StackContainer
             {
                 IsVisible = true,
-                Position = new Vector2(400, 100)
+                Position = new Vector2(400, 100),
+                Padding = new Vector4(0, 10, 0, 10)
             };
 
             _resources.Set("container-person-details", root);
@@ -406,12 +407,10 @@ namespace Bizio.App
                 IsVisible = true,
                 Font = font,
                 Color = Color.Black,
-                Position = new Vector2(0, 0),
                 Label = "Name",
                 LabelWidth = 75,
                 Text = person.FullName
             };
-
             root.AddChild(nameLabel);
 
             // Gender
@@ -420,16 +419,14 @@ namespace Bizio.App
                 IsVisible = true,
                 Font = font,
                 Color = Color.Black,
-                Position = new Vector2(0, 50),
                 Label = "Gender",
                 LabelWidth = 75,
                 Text = $"{person.Gender}"
             };
-
             root.AddChild(genderLabel);
 
             // Hire Button
-            var hireButton = CreateButton("Hire", 0, 100, 300, 50, HireCurrentPerson);
+            var hireButton = CreateButton("Hire", HireCurrentPerson);
             hireButton.IsEnabled = !_dataService.CurrentGame.PlayerCompany.Employees.Any(e => e.PersonId == person.Id);
             _resources.Set("container-person-details-button-hire", hireButton);
             root.AddChild(hireButton);
@@ -440,16 +437,13 @@ namespace Bizio.App
                 IsVisible = true,
                 Font = font,
                 Color = Color.Black,
-                Position = new Vector2(0, 175),
                 Text = "Skills"
             };
-
             root.AddChild(skillsLabel);
 
             var skillsContainer = new StackContainer
             {
                 IsVisible = true,
-                Position = new Vector2(75, 200),
                 Direction = LayoutDirection.Vertical,
                 Padding = new Vector4(0, 5, 0, 5)
             };
@@ -464,7 +458,7 @@ namespace Bizio.App
                     IsVisible = true,
                     Font = font,
                     Color = Color.Black,
-                    Position = new Vector2(0, 0),
+                    Position = new Vector2(75, 0),
                     Label = skill.Name,
                     LabelWidth = 50,
                     Text = $"{personSkill.Value:0.0}"
@@ -504,7 +498,7 @@ namespace Bizio.App
 
         private void ToggleProject(object sender, DataEventArgs<Project> args)
         {
-            var previousContainer = _resources.Get<VisualContainer>("container-project-details");
+            var previousContainer = _resources.Get<IContainer>("container-project-details");
 
             var previousProject = _resources.Get<Project>("previous-project");
 
@@ -538,10 +532,11 @@ namespace Bizio.App
 
         private IContainer CreateProjectDetailsContainer(Project project)
         {
-            var root = new VisualContainer
+            var root = new StackContainer
             {
                 IsVisible = true,
-                Position = new Vector2(400, 100)
+                Position = new Vector2(400, 100),
+                Padding = new Vector4(0, 10, 0, 10)
             };
 
             _resources.Set("container-project-details", root);
@@ -551,7 +546,6 @@ namespace Bizio.App
             var nameLabel = new TextBox
             {
                 IsVisible = true,
-                Position = new Vector2(0, 0),
                 Text = project.Name,
                 Color = Color.Black,
                 Font = font
@@ -561,7 +555,6 @@ namespace Bizio.App
             var descriptionLabel = new TextBox
             {
                 IsVisible = true,
-                Position = new Vector2(0, 35),
                 Text = project.Description,
                 Color = Color.Black,
                 Font = font
@@ -571,7 +564,6 @@ namespace Bizio.App
             var valueLabel = new LabeledTextBox
             {
                 IsVisible = true,
-                Position = new Vector2(0, 70),
                 Label = "Pays",
                 LabelWidth = 100,
                 Text = $"${project.Value:0.00}",
@@ -584,7 +576,6 @@ namespace Bizio.App
             var dueDateLabel = new LabeledTextBox
             {
                 IsVisible = true,
-                Position = new Vector2(0, 105),
                 Label = "Due on turn",
                 LabelWidth = 100,
                 Text = $"{project.TurnDue}",
@@ -594,14 +585,13 @@ namespace Bizio.App
 
             root.AddChild(dueDateLabel);
 
-            var acceptButton = CreateButton("Accept", 0, 140, 300, 50, OnAcceptProject, new DataEventArgs<Project>(project));
+            var acceptButton = CreateButton("Accept", OnAcceptProject, new DataEventArgs<Project>(project));
 
             root.AddChild(acceptButton);
 
             var requirementsLabel = new TextBox
             {
                 IsVisible = true,
-                Position = new Vector2(0, 200),
                 Font = font,
                 Color = Color.Black,
                 Text = $"Requirements ({project.Requirements.Sum(r => r.TargetAmount):0.0})"
@@ -612,7 +602,6 @@ namespace Bizio.App
             var requirements = new StackContainer
             {
                 IsVisible = true,
-                Position = new Vector2(50, 235),
                 Direction = LayoutDirection.Vertical,
                 Padding = new Vector4(0, 5, 0, 5)
             };
@@ -628,6 +617,7 @@ namespace Bizio.App
                     IsVisible = true,
                     Font = font,
                     Color = Color.Black,
+                    Position = new Vector2(50, 0),
                     Label = skill.Name,
                     LabelWidth = 75,
                     Text = $"{requirement.TargetAmount:0.0}"
@@ -705,7 +695,7 @@ namespace Bizio.App
 
         private void ToggleCompanyProject(object sender, DataEventArgs<Project> args)
         {
-            var previousContainer = _resources.Get<VisualContainer>("container-my-company-project-details");
+            var previousContainer = _resources.Get<IContainer>("container-my-company-project-details");
 
             var previousProject = _resources.Get<Project>("previous-my-company-project");
 
@@ -727,7 +717,7 @@ namespace Bizio.App
 
         private void ToggleCompanyEmployee(object sender, DataEventArgs<Employee> args)
         {
-            var previousContainer = _resources.Get<VisualContainer>("container-my-company-employee-details");
+            var previousContainer = _resources.Get<IContainer>("container-my-company-employee-details");
 
             var previousEmployee = _resources.Get<Employee>("previous-my-company-employee");
 
@@ -802,10 +792,11 @@ namespace Bizio.App
 
         private IContainer CreateCompanyProjectDetailsContainer(Project project)
         {
-            var root = new VisualContainer
+            var root = new StackContainer
             {
                 IsVisible = true,
-                Position = new Vector2(800, 100)
+                Position = new Vector2(800, 100),
+                Padding = new Vector4(0, 10, 0, 10)
             };
 
             _resources.Set("container-my-company-project-details", root);
@@ -815,7 +806,6 @@ namespace Bizio.App
             var nameLabel = new TextBox
             {
                 IsVisible = true,
-                Position = new Vector2(0, 0),
                 Text = project.Name,
                 Color = Color.Black,
                 Font = font
@@ -825,7 +815,6 @@ namespace Bizio.App
             var descriptionLabel = new TextBox
             {
                 IsVisible = true,
-                Position = new Vector2(0, 35),
                 Text = project.Description,
                 Color = Color.Black,
                 Font = font
@@ -835,7 +824,6 @@ namespace Bizio.App
             var valueLabel = new LabeledTextBox
             {
                 IsVisible = true,
-                Position = new Vector2(0, 70),
                 Label = "Pays",
                 LabelWidth = 100,
                 Text = $"${project.Value:0.00}",
@@ -848,7 +836,6 @@ namespace Bizio.App
             var dueDateLabel = new LabeledTextBox
             {
                 IsVisible = true,
-                Position = new Vector2(0, 105),
                 Label = "Due on turn",
                 LabelWidth = 100,
                 Text = $"{project.TurnDue}",
@@ -861,7 +848,6 @@ namespace Bizio.App
             var requirementsLabel = new TextBox
             {
                 IsVisible = true,
-                Position = new Vector2(0, 200),
                 Font = font,
                 Color = Color.Black,
                 Text = $"Requirements ({project.Requirements.Sum(r => r.TargetAmount):0.0})"
@@ -872,7 +858,6 @@ namespace Bizio.App
             var requirements = new StackContainer
             {
                 IsVisible = true,
-                Position = new Vector2(50, 235),
                 Direction = LayoutDirection.Vertical,
                 Padding = new Vector4(0, 5, 0, 5)
             };
@@ -888,6 +873,7 @@ namespace Bizio.App
                     IsVisible = true,
                     Font = font,
                     Color = Color.Black,
+                    Position = new Vector2(50, 0),
                     Label = skill.Name,
                     LabelWidth = 75,
                     Text = $"{requirement.TargetAmount:0.0}"
@@ -901,10 +887,11 @@ namespace Bizio.App
 
         private IContainer CreateCompanyEmployeeDetailsContainer(Employee employee)
         {
-            var root = new VisualContainer
+            var root = new StackContainer
             {
                 IsVisible = true,
-                Position = new Vector2(800, 100)
+                Position = new Vector2(800, 100),
+                Padding = new Vector4(0, 10, 0, 10)
             };
 
             _resources.Set("container-my-company-employee-details", root);
@@ -916,7 +903,6 @@ namespace Bizio.App
             var nameLabel = new TextBox
             {
                 IsVisible = true,
-                Position = new Vector2(0, 0),
                 Text = person.FullName,
                 Color = Color.Black,
                 Font = font
@@ -929,7 +915,6 @@ namespace Bizio.App
                 IsVisible = true,
                 Font = font,
                 Color = Color.Black,
-                Position = new Vector2(0, 50),
                 Label = "Gender",
                 LabelWidth = 75,
                 Text = $"{person.Gender}"
@@ -943,7 +928,6 @@ namespace Bizio.App
                 IsVisible = true,
                 Font = font,
                 Color = Color.Black,
-                Position = new Vector2(0, 100),
                 Text = "Skills"
             };
 
@@ -952,7 +936,6 @@ namespace Bizio.App
             var skillsContainer = new StackContainer
             {
                 IsVisible = true,
-                Position = new Vector2(75, 150),
                 Direction = LayoutDirection.Vertical,
                 Padding = new Vector4(0, 5, 0, 5)
             };
@@ -967,7 +950,7 @@ namespace Bizio.App
                     IsVisible = true,
                     Font = font,
                     Color = Color.Black,
-                    Position = new Vector2(0, 0),
+                    Position = new Vector2(75, 0),
                     Label = skill.Name,
                     LabelWidth = 50,
                     Text = $"{personSkill.Value:0.0}"

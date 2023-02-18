@@ -18,7 +18,7 @@ namespace Bizio.App.UI
         {
             var position = GetCurrentPosition();
 
-            position += new Vector2(Padding.X, Padding.Y);
+            position += new Vector2(Padding.X, Padding.Y) + child.Position;
 
             foreach (var renderable in _renderables)
             {
