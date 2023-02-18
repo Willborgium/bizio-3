@@ -57,6 +57,7 @@ namespace Bizio.App
 
             var pixel = Content.Load<Texture2D>("pixel");
             _resources.Set("texture-pixel", pixel);
+            DebuggingService.PixelTexture = pixel;
 
             _logger.Initialize(font, pixel);
 

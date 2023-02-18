@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Bizio.App.Services;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
@@ -151,6 +152,8 @@ namespace Bizio.App.UI
 
                 renderable.Render(renderer);
             }
+
+            DebuggingService.DrawRectangle(renderer, GetCurrentPosition(), Dimensions);
         }
 
         public int GetChildCount<T>(bool isRecursive)
