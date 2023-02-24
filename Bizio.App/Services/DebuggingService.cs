@@ -1,17 +1,56 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Collections.Generic;
 
 namespace Bizio.App.Services
 {
+    public enum DebugFlag
+    {
+        None = 0,
+        RenderableOutlines,
+        ShowEmptyContainers
+    }
+
     public static class DebuggingService
     {
         public static bool IsDebuggingEnabled { get; set; } = true;
 
         public static Texture2D PixelTexture { get; set; }
 
-        public static void DrawRectangle(SpriteBatch renderer, Vector2 position, Vector2 dimensions)
+        public static SpriteFont Font { get; set; }
+
+        static DebuggingService()
+        {
+            _flags = new Dictionary<DebugFlag, bool>
+            {
+                [DebugFlag.ShowEmptyContainers] = true,
+            };
+        }
+
+        public static bool IsEnabled(params DebugFlag[] flags)
         {
             if (!IsDebuggingEnabled)
+            {
+                return false;
+            }
+
+            foreach (var flag in flags)
+            {
+                if (!_flags.ContainsKey(flag) ||
+                    !_flags[flag])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public static void Set(DebugFlag flag, bool isEnabled) => _flags[flag] = isEnabled;
+
+        public static void DrawRectangle(SpriteBatch renderer, Vector2 position, Vector2 dimensions)
+        {
+            if (!IsEnabled(DebugFlag.RenderableOutlines))
             {
                 return;
             }
@@ -28,5 +67,17 @@ namespace Bizio.App.Services
             renderer.Draw(PixelTexture, left, Color.White);
             renderer.Draw(PixelTexture, right, Color.White);
         }
+
+        public static void DrawEmptyContainerText(SpriteBatch renderer, Vector2 position)
+        {
+            if (!IsEnabled(DebugFlag.ShowEmptyContainers))
+            {
+                return;
+            }
+
+            renderer.DrawString(Font, "Empty Container", position, Color.Black);
+        }
+
+        private static readonly IDictionary<DebugFlag, bool> _flags;
     }
 }

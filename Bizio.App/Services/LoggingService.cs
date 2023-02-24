@@ -14,7 +14,6 @@ namespace Bizio.App.Services
         public LoggingService()
         {
             _messages = new List<Message>();
-            IsVisible = true;
         }
 
         public void Initialize(SpriteFont font, Texture2D pixel)

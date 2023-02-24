@@ -1,7 +1,6 @@
 ﻿using Bizio.App.Game;
 using Newtonsoft.Json;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,9 +18,11 @@ namespace Bizio.App.Services
             StaticData = LoadDataFromFile<StaticData>(StaticDataFilePath);
         }
 
-        public void InitializeNewGame()
+        public void InitializeNewGame(Action<GameData> globalInitializeHook, Action<Company> playerCompanyInitializeHook)
         {
             var gameData = new GameData();
+
+            globalInitializeHook?.Invoke(gameData);
 
             var personBatchSize = StaticData.NewGamePeopleBatchSize.Random();
 
@@ -34,19 +35,19 @@ namespace Bizio.App.Services
 
             var companyBatchSize = StaticData.NewGameCompanyBatchSize.Random();
 
-            var founderIds = new List<Guid>();
-
             for (var companyIndex = 0;companyIndex < companyBatchSize; companyIndex++)
             {
-                var company = GenerateCompany(gameData.People, founderIds);
+                var company = new Company();
 
                 if (gameData.Companies.Count == 0)
                 {
                     company.IsPlayerCompany = true;
+                    playerCompanyInitializeHook?.Invoke(company);
                 }
 
-                founderIds.Add(company.Founder.PersonId);
+                InitializeCompany(company, gameData.People);
 
+                gameData.People.Remove(company.Founder.Person);
                 gameData.Companies.Add(company);
             }
 
@@ -117,27 +118,22 @@ namespace Bizio.App.Services
             return person;
         }
 
-        private Company GenerateCompany(IEnumerable<Person> people, IEnumerable<Guid> founderIds)
+        private void InitializeCompany(Company company, IEnumerable<Person> people)
         {
-            var founder = people.Random(p => !founderIds.Contains(p.Id));
+            var founder = people.Random();
 
             var founderEmployee = new Employee
             {
-                PersonId = founder.Id,
+                Person = founder,
+                IsFounder = true,
                 Salary = 0
             };
 
-            var company =  new Company
-            {
-                Id = Guid.NewGuid(),
-                Name = StaticData.CompanyNames.Random(),
-                Money = 1500,
-                Founder = founderEmployee
-            };
+            company.Id = Guid.NewGuid();
+            company.Name = StaticData.CompanyNames.Random();
+            company.Money = 1500;
 
             company.Employees.Add(founderEmployee);
-
-            return company;
         }
 
         private static T LoadDataFromFile<T>(string path)

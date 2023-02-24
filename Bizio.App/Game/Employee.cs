@@ -1,10 +1,9 @@
-﻿using System;
-
-namespace Bizio.App.Game
+﻿namespace Bizio.App.Game
 {
     public class Employee
     {
-        public Guid PersonId { get; set; }
+        public Person Person { get; set; }
         public int Salary { get; set; }
+        public bool IsFounder { get; set; }
     }
 }

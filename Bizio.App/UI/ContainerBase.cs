@@ -153,6 +153,11 @@ namespace Bizio.App.UI
                 renderable.Render(renderer);
             }
 
+            if (!_renderables.Any())
+            {
+                DebuggingService.DrawEmptyContainerText(renderer, GetCurrentPosition());
+            }
+
             DebuggingService.DrawRectangle(renderer, GetCurrentPosition(), Dimensions);
         }
 
