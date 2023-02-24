@@ -237,6 +237,7 @@ namespace Bizio.App
             "container-my-company-employee-details",
             "container-my-company-projects",
             "container-my-company-project-details",
+            "container-my-company-project-allocations"
         };
 
         private void CloseAllContainers(params string[] except)
@@ -279,6 +280,7 @@ namespace Bizio.App
                 {
                     c.Projects.CollectionChanged += OnCompanyProjectsChanged;
                     c.Employees.CollectionChanged += OnCompanyEmployeesChanged;
+                    c.Allocations.CollectionChanged += OnCompanyAllocationsChanged;
                 }
             );
 
@@ -304,6 +306,16 @@ namespace Bizio.App
 
         private void NextTurn(object sender, EventArgs e)
         {
+            // Charge employee salary
+
+            foreach (var company in _dataService.CurrentGame.Companies)
+            {
+                foreach (var employee in company.Employees)
+                {
+                    company.Money -= employee.Salary;
+                }
+            }
+
             _dataService.CurrentGame.Turn++;
 
             var currentTurnTextBox = _resources.Get<TextBox>("current-turn-textbox");
@@ -841,14 +853,21 @@ namespace Bizio.App
 
         private IContainer CreateCompanyProjectDetailsContainer(Project project)
         {
+            var projectContainer = new VisualContainer
+            {
+                IsVisible = true,
+                Position = new Vector2(800, 100)
+            };
+
+            _resources.Set("container-my-company-project-details", projectContainer);
+
             var root = new StackContainer
             {
                 IsVisible = true,
-                Position = new Vector2(800, 100),
                 Padding = new Vector4(0, 10, 0, 10)
             };
 
-            _resources.Set("container-my-company-project-details", root);
+            projectContainer.AddChild(root);
 
             var font = _resources.Get<SpriteFont>("font-default");
 
@@ -894,6 +913,9 @@ namespace Bizio.App
 
             root.AddChild(dueDateLabel);
 
+            var allocationsButton = CreateButton("Allocations", ToggleCompanyProjectAllocationsContainer, new DataEventArgs<Project>(project));
+            root.AddChild(allocationsButton);
+
             var requirementsLabel = new TextBox
             {
                 IsVisible = true,
@@ -931,7 +953,194 @@ namespace Bizio.App
                 requirements.AddChild(requirementLabel);
             }
 
-            return root;
+            return projectContainer;
+        }
+
+        private void ToggleCompanyProjectAllocationsContainer(object sender, DataEventArgs<Project> e)
+        {
+            var projectContainer = _resources.Get<IContainer>("container-my-company-project-details");
+
+            var previousContainer = projectContainer.FindChild("container-my-company-project-allocations");
+            projectContainer.RemoveChild(previousContainer);
+
+            var previousData = _resources.Get<Project>("my-company-project-allocations-current");
+            if (previousData == e.Data)
+            {
+                _resources.Set("my-company-project-allocations-current", null);
+                return;
+            }
+
+            _resources.Set("my-company-project-allocations-current", e.Data);
+
+            var container = CreateCompanyProjectAllocationsContainer(e.Data);
+
+            projectContainer.AddChild(container);
+        }
+
+        private void OnCompanyAllocationsChanged(object sender, NotifyCollectionChangedEventArgs args)
+        {
+            var currentProject = _resources.Get<Project>("my-company-project-allocations-current");
+
+            var currentProjectAllocationsContainer = _visualRoot.FindChild<ContainerBase>("container-my-company-project-allocations-current");
+
+            if (args.OldItems != null)
+            {
+                var currentProjectEmployeesContainer = _visualRoot.FindChild<ContainerBase>("container-my-company-project-employees");
+
+                foreach (Allocation allocation in args.OldItems)
+                {
+                    if (allocation.Project != currentProject)
+                    {
+                        continue;
+                    }
+
+                    _logger.Info($"Adding company project allocation {allocation.Employee.Person.Id} -> {allocation.Project.Id}");
+                    var child = currentProjectAllocationsContainer.FindChild($"project-allocation-{allocation.Employee.Person.Id}");
+                    currentProjectAllocationsContainer.RemoveChild(child);
+
+                    currentProjectEmployeesContainer.AddChild(CreateButton(allocation.Employee.Person.FullName, (s, e) =>
+                    {
+                        _dataService.CurrentGame.PlayerCompany.Allocations.Add(new Allocation
+                        {
+                            Employee = allocation.Employee,
+                            Project = allocation.Project,
+                            Percent = 1f
+                        });
+                        currentProjectEmployeesContainer.RemoveChild(s);
+                    }));
+                    
+                }
+            }
+
+            if (args.NewItems != null)
+            {
+                foreach (Allocation allocation in args.NewItems)
+                {
+                    if (allocation.Project != currentProject)
+                    {
+                        continue;
+                    }
+
+                    _logger.Info($"Adding company project allocation {allocation.Employee.Person.Id} -> {allocation.Project.Id}");
+                    var uiAllocation = CreateCompanyProjectAllocation(allocation);
+                    currentProjectAllocationsContainer.AddChild(uiAllocation);
+                }
+            }
+        }
+
+        private IRenderable CreateCompanyProjectAllocation(Allocation allocation)
+        {
+            var container = new StackContainer
+            {
+                IsVisible = true,
+                Padding = new Vector4(10, 0, 10, 0),
+                Direction = LayoutDirection.Horizontal,
+                Locator = $"project-allocation-{allocation.Employee.Person.Id}",
+            };
+
+            var font = _resources.Get<SpriteFont>("font-default");
+
+            container.AddChild(new TextBox
+            {
+                IsVisible = true,
+                Text = allocation.Employee.Person.FullName,
+                Font = font,
+                Color = Color.Black
+            });
+
+            var value = new TextBox
+            {
+                IsVisible = true,
+                Text = $"{allocation.Percent:P0}",
+                Font = font,
+                Color = Color.Black
+            };
+
+            var minus = CreateButton("-", 0, 0, 35, 35, (s, e) =>
+            {
+                allocation.Percent -= .1f;
+                if (allocation.Percent < .1f)
+                {
+                    allocation.Percent = .1f;
+                }
+                value.Text = $"{allocation.Percent:P0}";
+            });
+            container.AddChild(minus);
+
+            container.AddChild(value);
+
+            var plus = CreateButton("+", 0, 0, 35, 35, (s, e) =>
+            {
+                allocation.Percent += .1f;
+                if (allocation.Percent > 1f)
+                {
+                    allocation.Percent = 1f;
+                }
+                value.Text = $"{allocation.Percent:P0}";
+            });
+            container.AddChild(plus);
+
+            var delete = CreateButton("X", 0, 0, 35, 35, (s, e) =>
+            {
+                _dataService.CurrentGame.PlayerCompany.Allocations.Remove(allocation);
+            });
+            container.AddChild(delete);
+
+            return container;
+        }
+
+        private IContainer CreateCompanyProjectAllocationsContainer(Project project)
+        {
+            var container = new StackContainer
+            {
+                IsVisible = true,
+                Position = new Vector2(300, 0),
+                Padding = new Vector4(0, 10, 0, 10),
+                Locator = "container-my-company-project-allocations"
+            };
+
+            var currentContainer = new StackContainer
+            {
+                IsVisible = true,
+                Padding = new Vector4(0, 10, 0, 10),
+                Locator = "container-my-company-project-allocations-current"
+            };
+
+            container.AddChild(currentContainer);
+
+            var allocations = _dataService.CurrentGame.PlayerCompany.Allocations.Where(a => a.Project == project);
+
+            foreach (var allocation in allocations)
+            {
+                currentContainer.AddChild(CreateCompanyProjectAllocation(allocation));
+            }
+
+            var employeesContainer = new StackContainer
+            {
+                IsVisible = true,
+                Padding = new Vector4(0, 10, 0, 10),
+                Locator = "container-my-company-project-employees"
+            };
+
+            container.AddChild(employeesContainer);
+
+            var employees = _dataService.CurrentGame.PlayerCompany.Employees.Where(e => !allocations.Any(a => a.Employee == e));
+
+            foreach (var employee in employees)
+            {
+                employeesContainer.AddChild(CreateButton(employee.Person.FullName, (s, e) =>
+                {
+                    _dataService.CurrentGame.PlayerCompany.Allocations.Add(new Allocation
+                    {
+                        Employee = employee,
+                        Project = project,
+                        Percent = 1f
+                    });
+                    employeesContainer.RemoveChild(s);
+                }));
+            }
+
+            return container;
         }
 
         private IContainer CreateCompanyEmployeeDetailsContainer(Employee employee)

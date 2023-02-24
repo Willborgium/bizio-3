@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace Bizio.App.UI
 {
-    public abstract class ContainerBase : IContainer, IMeasurable, ITranslatable
+    public abstract class ContainerBase : IContainer, IMeasurable, ITranslatable, ILocatable
     {
         public bool IsVisible { get; set; }
 
@@ -21,6 +21,8 @@ namespace Bizio.App.UI
         public Vector2 Dimensions => _dimensions;
 
         public event EventHandler ChildrenChanged;
+
+        public string Locator { get; set; }
 
         public ContainerBase()
         {
@@ -136,9 +138,30 @@ namespace Bizio.App.UI
             ChildrenChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        public ILocatable FindChild(string locator)
+        public ILocatable FindChild(string locator) => FindChild<ILocatable>(locator);
+
+        public T FindChild<T>(string locator)
+            where T : class, ILocatable
         {
-            return (ILocatable)_children.FirstOrDefault(c => (c as ILocatable)?.Locator == locator);
+            foreach (var child in _children)
+            {
+                if (child is T t && t.Locator == locator)
+                {
+                    return t;
+                }
+
+                if (child is IContainer c)
+                {
+                    var result = c.FindChild<T>(locator);
+
+                    if (result != null)
+                    {
+                        return result;
+                    }
+                }
+            }
+
+            return null;
         }
 
         public virtual void Render(SpriteBatch renderer)

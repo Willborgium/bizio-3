@@ -13,11 +13,13 @@ namespace Bizio.App.Game
         public float Money { get; set; }
         public ObservableCollection<Project> Projects { get; set; }
         public Employee Founder => Employees?.FirstOrDefault(e => e.IsFounder);
+        public ObservableCollection<Allocation> Allocations { get; set; }
 
         public Company()
         {
             Employees = new();
             Projects = new();
+            Allocations = new();
         }
     }
 }
