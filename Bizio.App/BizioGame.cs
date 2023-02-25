@@ -27,7 +27,8 @@ namespace Bizio.App
             _graphics = new GraphicsDeviceManager(this)
             {
                 PreferredBackBufferWidth = 1920,
-                PreferredBackBufferHeight = 1080
+                PreferredBackBufferHeight = 1080,
+                IsFullScreen = true
             };
 
             Content.RootDirectory = "Content";
@@ -306,16 +307,60 @@ namespace Bizio.App
 
         private void NextTurn(object sender, EventArgs e)
         {
-            // Charge employee salary
 
             foreach (var company in _dataService.CurrentGame.Companies)
             {
+                // Charge employee salary
+
                 foreach (var employee in company.Employees)
                 {
                     company.Money -= employee.Salary;
                 }
-            }
 
+                // Apply skills to projects
+                foreach (var allocation in company.Allocations)
+                {
+                    foreach (var requirement in allocation.Project.Requirements)
+                    {
+                        if (requirement.CurrentAmount == requirement.TargetAmount)
+                        {
+                            continue;
+                        }
+
+                        var skill = allocation.Employee.Person.Skills.FirstOrDefault(s => s.SkillId== requirement.SkillId); ;
+
+                        if (skill == default)
+                        {
+                            continue;
+                        }
+
+                        requirement.CurrentAmount += skill.Value;
+
+                        // Increase skill due to usage
+                        var rate = 0f;
+                        switch (skill.LearnRate)
+                        {
+                            case PersonSkillLearnRate.VerySlow:
+                                rate = .5f;
+                                break;
+                            case PersonSkillLearnRate.Slow:
+                                rate = .75f;
+                                break;
+                            case PersonSkillLearnRate.Average:
+                                rate = 1f;
+                                break;
+                            case PersonSkillLearnRate.Fast:
+                                rate = 1.25f;
+                                break;
+                            case PersonSkillLearnRate.VeryFast:
+                                rate = 1.5f;
+                                break;
+                        }
+                        skill.Value += rate;
+                    }
+                }
+            }
+            
             _dataService.CurrentGame.Turn++;
 
             var currentTurnTextBox = _resources.Get<TextBox>("current-turn-textbox");
@@ -947,7 +992,7 @@ namespace Bizio.App
                     Position = new Vector2(50, 0),
                     Label = skill.Name,
                     LabelWidth = 75,
-                    Text = $"{requirement.TargetAmount:0.0}"
+                    Text = $"{requirement.CurrentAmount:0.0} / {requirement.TargetAmount:0.0}"
                 };
 
                 requirements.AddChild(requirementLabel);
