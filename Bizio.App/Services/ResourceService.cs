@@ -2,7 +2,7 @@
 
 namespace Bizio.App.Services
 {
-    public class ResourceService
+    public class ResourceService : IResourceService
     {
         public T Get<T>(string key)
         {

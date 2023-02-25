@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Bizio.App.Services
 {
-    public class LoggingService : IRenderable
+    public class LoggingService : ILoggingService
     {
         public bool IsVisible { get; set; }
 

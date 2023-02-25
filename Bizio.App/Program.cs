@@ -1,12 +1,23 @@
-﻿namespace Bizio.App
+﻿using Bizio.App.Services;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Bizio.App
 {
     public static class Program
     {
         public static void Main(string[] args)
         {
-            using (BizioGame game = new())
+            var services = new ServiceCollection()
+                .AddSingleton<IResourceService, ResourceService>()
+                .AddSingleton<IDataService, DataService>()
+                .AddSingleton<ILoggingService, LoggingService>()
+                .AddTransient<IRunnable, BizioGame>();
+
+            using (var provider = services.BuildServiceProvider())
             {
-                game.Run();
+                provider
+                    .GetRequiredService<IRunnable>()
+                    .Run();
             }
         }
     }

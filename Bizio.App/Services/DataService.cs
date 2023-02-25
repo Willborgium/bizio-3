@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Bizio.App.Services
 {
-    public class DataService
+    public class DataService : IDataService
     {
         public StaticData StaticData { get; private set; }
 
@@ -35,7 +35,7 @@ namespace Bizio.App.Services
 
             var companyBatchSize = StaticData.NewGameCompanyBatchSize.Random();
 
-            for (var companyIndex = 0;companyIndex < companyBatchSize; companyIndex++)
+            for (var companyIndex = 0; companyIndex < companyBatchSize; companyIndex++)
             {
                 var company = new Company();
 
@@ -52,7 +52,7 @@ namespace Bizio.App.Services
             }
 
             var projectBatchSize = StaticData.NewGameProjectBatchSize.Random();
-            
+
             for (var projectIndex = 0; projectIndex < projectBatchSize; projectIndex++)
             {
                 var project = new Project
@@ -61,7 +61,7 @@ namespace Bizio.App.Services
                     Name = $"Project {projectIndex + 1}",
                     Description = $"Description on project {projectIndex + 1}",
                     TurnDue = gameData.Turn + _r.Next(5, 10),
-                    Value = (float)Math.Round(_r.NextDouble() + .1, 1) * 500f                    
+                    Value = (float)Math.Round(_r.NextDouble() + .1, 1) * 500f
                 };
 
                 var requirementCount = _r.Next(1, StaticData.Skills.Count);
