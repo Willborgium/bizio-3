@@ -307,11 +307,9 @@ namespace Bizio.App
 
         private void NextTurn(object sender, EventArgs e)
         {
-
             foreach (var company in _dataService.CurrentGame.Companies)
             {
                 // Charge employee salary
-
                 foreach (var employee in company.Employees)
                 {
                     company.Money -= employee.Salary;
@@ -336,27 +334,60 @@ namespace Bizio.App
 
                         requirement.CurrentAmount += skill.Value;
 
+                        requirement.CurrentAmount = Math.Min(requirement.CurrentAmount, requirement.TargetAmount);
+
                         // Increase skill due to usage
                         var rate = 0f;
                         switch (skill.LearnRate)
                         {
                             case PersonSkillLearnRate.VerySlow:
-                                rate = .5f;
-                                break;
-                            case PersonSkillLearnRate.Slow:
-                                rate = .75f;
-                                break;
-                            case PersonSkillLearnRate.Average:
                                 rate = 1f;
                                 break;
+                            case PersonSkillLearnRate.Slow:
+                                rate = 2f;
+                                break;
+                            case PersonSkillLearnRate.Average:
+                                rate = 3f;
+                                break;
                             case PersonSkillLearnRate.Fast:
-                                rate = 1.25f;
+                                rate = 4f;
                                 break;
                             case PersonSkillLearnRate.VeryFast:
-                                rate = 1.5f;
+                                rate = 5f;
                                 break;
                         }
                         skill.Value += rate;
+                    }
+                }
+
+                foreach (var project in company.Projects)
+                {
+                    if (project.Status != ProjectStatus.InProgress)
+                    {
+                        continue;
+                    }
+
+                    var isComplete = project.Requirements.All(r => r.CurrentAmount >= r.TargetAmount);
+
+                    if (isComplete)
+                    {
+                        company.Money += project.Value;
+                        project.Status = ProjectStatus.Completed;
+                        continue;
+                    }
+
+                    if (project.TurnDue == _dataService.CurrentGame.Turn)
+                    {
+                        project.Status = ProjectStatus.Failed;
+
+                        var toRemove = company.Allocations.Where(a => a.Project == project).ToList();
+
+                        foreach (var allocation in toRemove)
+                        {
+                            company.Allocations.Remove(allocation);
+                        }
+
+                        continue;
                     }
                 }
             }
@@ -956,10 +987,26 @@ namespace Bizio.App
                 Font = font
             };
 
-            root.AddChild(dueDateLabel);
+            if (project.Status != ProjectStatus.InProgress)
+            {
+                var statusLabel = new LabeledTextBox
+                {
+                    IsVisible = true,
+                    Label = "Status",
+                    LabelWidth = 100,
+                    Text = $"{project.Status}",
+                    Color = Color.Black,
+                    Font = font
+                };
 
-            var allocationsButton = CreateButton("Allocations", ToggleCompanyProjectAllocationsContainer, new DataEventArgs<Project>(project));
-            root.AddChild(allocationsButton);
+                root.AddChild(statusLabel);
+            }
+
+            if (project.Status == ProjectStatus.InProgress)
+            {
+                var allocationsButton = CreateButton("Allocations", ToggleCompanyProjectAllocationsContainer, new DataEventArgs<Project>(project));
+                root.AddChild(allocationsButton);
+            }
 
             var requirementsLabel = new TextBox
             {
