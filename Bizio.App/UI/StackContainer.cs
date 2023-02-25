@@ -9,11 +9,6 @@ namespace Bizio.App.UI
 
         public Vector4 Padding { get; set; }
 
-        public StackContainer()
-            : base()
-        {
-        }
-
         public override Vector2 GetChildAbsolutePosition(ITranslatable child)
         {
             var position = GetCurrentPosition();

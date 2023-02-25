@@ -27,6 +27,11 @@ namespace Bizio.App.UI
 
         public Vector2 Dimensions => GetDimensions();
 
+        public LabeledTextBox()
+        {
+            IsVisible = true;
+        }
+
         public void Render(SpriteBatch renderer)
         {
             var position = Parent?.GetChildAbsolutePosition(this) ?? Position;

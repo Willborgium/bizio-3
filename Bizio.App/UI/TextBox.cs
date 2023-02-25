@@ -21,6 +21,11 @@ namespace Bizio.App.UI
 
         public Vector2 Dimensions => Font?.MeasureString(Text ?? string.Empty) ?? Vector2.Zero;
 
+        public TextBox()
+        {
+            IsVisible = true;
+        }
+
         public void Render(SpriteBatch renderer)
         {
             var position = Parent?.GetChildAbsolutePosition(this) ?? Position;

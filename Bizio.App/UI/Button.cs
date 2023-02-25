@@ -2,15 +2,9 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.ComponentModel.Design.Serialization;
 
 namespace Bizio.App.UI
 {
-    public interface ILocatable
-    {
-        public string Locator { get; set; }
-    }
-
     public class Button : IUpdateable, IRenderable, ITranslatable, IMeasurable, ILocatable
     {
         public bool IsVisible { get; set; }
