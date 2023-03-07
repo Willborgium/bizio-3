@@ -1,13 +1,13 @@
 ﻿using Bizio.App.Game;
 using Bizio.App.Services;
 using Bizio.App.UI;
+using Bizio.App.UI.Containers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Xml;
 
 namespace Bizio.App
 {
@@ -19,24 +19,25 @@ namespace Bizio.App
         private readonly IResourceService _resourceService;
         private readonly IDataService _dataService;
         private readonly ILoggingService _loggingService;
-
-        private IContainer _visualRoot;
+        private readonly IUiService _uiService;
 
         public BizioGame(
             IResourceService resourceService,
             IDataService dataService,
-            ILoggingService loggingService
+            ILoggingService loggingService,
+            IUiService uiService
             )
         {
             _resourceService = resourceService;
             _dataService = dataService;
             _loggingService = loggingService;
+            _uiService = uiService;
 
             _graphics = new GraphicsDeviceManager(this)
             {
                 PreferredBackBufferWidth = 1920,
                 PreferredBackBufferHeight = 1080,
-                IsFullScreen = true
+                IsFullScreen = false
             };
 
             Content.RootDirectory = "Content";
@@ -45,12 +46,7 @@ namespace Bizio.App
 
         protected override void Initialize()
         {
-            _visualRoot = new VisualContainer
-            {
-                Position = new Vector2(0, 0)
-            };
-
-            _visualRoot.AddChild(_loggingService);
+            _uiService.AddChild(_loggingService);
 
             base.Initialize();
         }
@@ -83,14 +79,16 @@ namespace Bizio.App
             _resourceService.Set("button-spritesheet-default", buttonSpritesheet);
             _resourceService.Set("button-metadata-default", buttonMetadata);
 
-            _visualRoot.AddChild(CreateMenuContainer());
-            _visualRoot.AddChild(CreateDebugContainer());
-            _visualRoot.AddChild(CreateHeadlineContainer());
-            _visualRoot.AddChild(CreatePeopleContainer());
-            _visualRoot.AddChild(CreateProjectsContainer());
-            _visualRoot.AddChild(CreateMyCompanyContainer());
-            _visualRoot.AddChild(CreateMyCompanyProjectsContainer());
-            _visualRoot.AddChild(CreateMyCompanyEmployeesContainer());
+            _uiService.AddChild(CreateMenuContainer());
+            var debugContainer = new DebugContainer(_loggingService, _uiService);
+            debugContainer.Initialize(_graphics.PreferredBackBufferWidth, _graphics.PreferredBackBufferHeight);
+            _uiService.AddChild(debugContainer);
+            _uiService.AddChild(CreateHeadlineContainer());
+            _uiService.AddChild(CreatePeopleContainer());
+            _uiService.AddChild(CreateProjectsContainer());
+            _uiService.AddChild(CreateMyCompanyContainer());
+            _uiService.AddChild(CreateMyCompanyProjectsContainer());
+            _uiService.AddChild(CreateMyCompanyEmployeesContainer());
 
             CloseAllContainers();
 
@@ -101,32 +99,6 @@ namespace Bizio.App
             _loggingService.Info("Initialization complete");
         }
 
-        private IContainer CreateDebugContainer()
-        {
-            var container = new StackContainer
-            {
-                Padding = Vector4.One * 10,
-                Direction = LayoutDirection.Horizontal
-            };
-
-            container.AddChild(CreateButton("Logger", 0, 0, 200, 50, ToggleDebugInfo));
-            container.AddChild(CreateButton("Snapshot", 0, 0, 200, 50, LogSnapshot));
-            container.AddChild(CreateButton("Outlines", 0, 0, 200, 50, ToggleDebuggingOutlines));
-
-            var x = _graphics.PreferredBackBufferWidth - container.Dimensions.X;
-            var y = _graphics.PreferredBackBufferHeight - container.Dimensions.Y;
-
-            container.Position = new Vector2(x, y);
-
-            return container;
-        }
-
-        private void ToggleDebuggingOutlines(object sender, EventArgs e)
-        {
-            var isEnabled = DebuggingService.IsEnabled(DebugFlag.RenderableOutlines);
-            DebuggingService.Set(DebugFlag.RenderableOutlines, !isEnabled);
-        }
-
         private IContainer CreateMenuContainer()
         {
             var container = new StackContainer
@@ -135,10 +107,10 @@ namespace Bizio.App
                 Direction = LayoutDirection.Vertical
             };
 
-            container.AddChild(CreateButton("New Game", 0, 0, 200, 50, StartNewGame));
-            container.AddChild(CreateButton("My Company", 0, 0, 200, 50, ToggleMyCompany));
-            container.AddChild(CreateButton("People", 0, 0, 200, 50, TogglePeopleList));
-            container.AddChild(CreateButton("Projects", 0, 0, 200, 50, ToggleProjectsList));
+            container.AddChild(_uiService.CreateButton("New Game", 0, 0, 200, 50, StartNewGame));
+            container.AddChild(_uiService.CreateButton("My Company", 0, 0, 200, 50, ToggleMyCompany));
+            container.AddChild(_uiService.CreateButton("People", 0, 0, 200, 50, TogglePeopleList));
+            container.AddChild(_uiService.CreateButton("Projects", 0, 0, 200, 50, ToggleProjectsList));
 
             var x = _graphics.PreferredBackBufferWidth - container.Dimensions.X;
             var y = (_graphics.PreferredBackBufferHeight - container.Dimensions.Y) / 2;
@@ -204,7 +176,7 @@ namespace Bizio.App
             container.AddChild(projectCount);
             _resourceService.Set("project-count-textbox", projectCount);
 
-            var nextTurnButton = CreateButton("Next Turn", 0, 0, 200, 50, NextTurn);
+            var nextTurnButton = _uiService.CreateButton("Next Turn", 0, 0, 200, 50, NextTurn);
             _resourceService.Set("next-turn-button", nextTurnButton);
             container.AddChild(nextTurnButton);
 
@@ -212,23 +184,6 @@ namespace Bizio.App
         }
 
         // Utilities
-
-        private void LogSnapshot(object sender, EventArgs e)
-        {
-            var renderableCount = _visualRoot.GetChildCount<IRenderable>(true);
-            var updateableCount = _visualRoot.GetChildCount<IUpdateable>(true);
-
-            _loggingService.Info("[BEGIN SNAPSHOT]");
-            _loggingService.Info($"Renderables: {renderableCount}");
-            _loggingService.Info($"Updateables: {updateableCount}");
-            _loggingService.Info("[END SNAPSHOT]");
-        }
-
-        private void ToggleDebugInfo(object sender, EventArgs e)
-        {
-            _loggingService.IsVisible = !_loggingService.IsVisible;
-            _loggingService.Info($"Logger toggled: {_loggingService.IsVisible}");
-        }
 
         private static readonly string[] ContainerNames = new[]
         {
@@ -449,7 +404,7 @@ namespace Bizio.App
 
         private void AddProject(Project project, IContainer container)
         {
-            var button = CreateButton(project.Name, ToggleProject, new DataEventArgs<Project>(project));
+            var button = _uiService.CreateButton(project.Name, ToggleProject, new DataEventArgs<Project>(project));
             button.Locator = $"project-accept-button-{project.Id}";
             container.AddChild(button);
         }
@@ -488,7 +443,7 @@ namespace Bizio.App
         private void AddPerson(Person person, IContainer container)
         {
             _loggingService.Info($"Adding person {person.Id}: {person.FullName}");
-            var button = CreateButton($"{person.FullName}", TogglePerson, new DataEventArgs<Person>(person));
+            var button = _uiService.CreateButton($"{person.FullName}", TogglePerson, new DataEventArgs<Person>(person));
             button.Locator = $"person-{person.Id}";
             container.AddChild(button);
         }
@@ -506,7 +461,7 @@ namespace Bizio.App
             var previousContainer = _resourceService.Get<IContainer>("container-person-details");
             var previousPerson = _resourceService.Get<Person>("previous-person");
 
-            _visualRoot.RemoveChild(previousContainer);
+            _uiService.RemoveChild(previousContainer);
 
             if (args.Data == null || args.Data == previousPerson)
             {
@@ -519,7 +474,7 @@ namespace Bizio.App
 
             var currentContainer = CreatePersonDetailsContainer(args.Data);
 
-            _visualRoot.AddChild(currentContainer);
+            _uiService.AddChild(currentContainer);
         }
 
         private IRenderable CreatePeopleContainer()
@@ -569,7 +524,7 @@ namespace Bizio.App
             root.AddChild(genderLabel);
 
             // Hire Button
-            var hireButton = CreateButton("Hire", (s, e) => HirePerson(person));
+            var hireButton = _uiService.CreateButton("Hire", (s, e) => HirePerson(person));
             hireButton.Locator = $"person-hire-button-{person.Id}";
             root.AddChild(hireButton);
 
@@ -634,7 +589,7 @@ namespace Bizio.App
 
             var previousProject = _resourceService.Get<Project>("previous-project");
 
-            _visualRoot.RemoveChild(previousContainer);
+            _uiService.RemoveChild(previousContainer);
 
             if (args.Data == null || args.Data == previousProject)
             {
@@ -647,7 +602,7 @@ namespace Bizio.App
 
             var currentContainer = CreateProjectDetailsContainer(args.Data);
 
-            _visualRoot.AddChild(currentContainer);
+            _uiService.AddChild(currentContainer);
         }
 
         private IRenderable CreateProjectsContainer()
@@ -712,7 +667,7 @@ namespace Bizio.App
 
             root.AddChild(dueDateLabel);
 
-            var acceptButton = CreateButton("Accept", OnAcceptProject, new DataEventArgs<Project>(project));
+            var acceptButton = _uiService.CreateButton("Accept", OnAcceptProject, new DataEventArgs<Project>(project));
 
             root.AddChild(acceptButton);
 
@@ -782,10 +737,10 @@ namespace Bizio.App
 
             myCompanyContainer.AddChild(buttonsContainer);
 
-            var employeesButton = CreateButton("Employees", ToggleCompanyEmployees);
+            var employeesButton = _uiService.CreateButton("Employees", ToggleCompanyEmployees);
             buttonsContainer.AddChild(employeesButton);
 
-            var projectsButton = CreateButton("Projects", ToggleCompanyProjects);
+            var projectsButton = _uiService.CreateButton("Projects", ToggleCompanyProjects);
             buttonsContainer.AddChild(projectsButton);
 
             return myCompanyContainer;
@@ -825,7 +780,7 @@ namespace Bizio.App
 
             var previousProject = _resourceService.Get<Project>("previous-my-company-project");
 
-            _visualRoot.RemoveChild(previousContainer);
+            _uiService.RemoveChild(previousContainer);
 
             if (args.Data == null || args.Data == previousProject)
             {
@@ -838,7 +793,7 @@ namespace Bizio.App
 
             var currentContainer = CreateCompanyProjectDetailsContainer(args.Data);
 
-            _visualRoot.AddChild(currentContainer);
+            _uiService.AddChild(currentContainer);
         }
 
         private void ToggleCompanyEmployee(object sender, DataEventArgs<Employee> args)
@@ -847,7 +802,7 @@ namespace Bizio.App
 
             var previousEmployee = _resourceService.Get<Employee>("previous-my-company-employee");
 
-            _visualRoot.RemoveChild(previousContainer);
+            _uiService.RemoveChild(previousContainer);
 
             if (args.Data == null || args.Data == previousEmployee)
             {
@@ -860,7 +815,7 @@ namespace Bizio.App
 
             var currentContainer = CreateCompanyEmployeeDetailsContainer(args.Data);
 
-            _visualRoot.AddChild(currentContainer);
+            _uiService.AddChild(currentContainer);
         }
 
         private void OnCompanyProjectsChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -882,7 +837,7 @@ namespace Bizio.App
                 foreach (Project project in e.NewItems)
                 {
                     _loggingService.Info($"Adding player project {project.Id}: {project.Name}");
-                    var button = CreateButton(project.Name, ToggleCompanyProject, new DataEventArgs<Project>(project));
+                    var button = _uiService.CreateButton(project.Name, ToggleCompanyProject, new DataEventArgs<Project>(project));
                     button.Locator = $"my-company-view-project-{project.Id}";
                     container.AddChild(button);
                 }
@@ -908,7 +863,7 @@ namespace Bizio.App
                 foreach (Employee employee in e.NewItems)
                 {
                     _loggingService.Info($"Adding player employee {employee.Person.Id}");
-                    var button = CreateButton(employee.Person.FullName, ToggleCompanyEmployee, new DataEventArgs<Employee>(employee));
+                    var button = _uiService.CreateButton(employee.Person.FullName, ToggleCompanyEmployee, new DataEventArgs<Employee>(employee));
                     button.Locator = $"my-company-view-employee-{employee.Person.Id}";
                     container.AddChild(button);
                 }
@@ -985,7 +940,7 @@ namespace Bizio.App
 
             if (project.Status == ProjectStatus.InProgress)
             {
-                var allocationsButton = CreateButton("Allocations", ToggleCompanyProjectAllocationsContainer, new DataEventArgs<Project>(project));
+                var allocationsButton = _uiService.CreateButton("Allocations", ToggleCompanyProjectAllocationsContainer, new DataEventArgs<Project>(project));
                 root.AddChild(allocationsButton);
             }
 
@@ -1051,11 +1006,11 @@ namespace Bizio.App
         {
             var currentProject = _resourceService.Get<Project>("my-company-project-allocations-current");
 
-            var currentProjectAllocationsContainer = _visualRoot.FindChild<ContainerBase>("container-my-company-project-allocations-current");
+            var currentProjectAllocationsContainer = _uiService.FindChild<ContainerBase>("container-my-company-project-allocations-current");
 
             if (args.OldItems != null)
             {
-                var currentProjectEmployeesContainer = _visualRoot.FindChild<ContainerBase>("container-my-company-project-employees");
+                var currentProjectEmployeesContainer = _uiService.FindChild<ContainerBase>("container-my-company-project-employees");
 
                 foreach (Allocation allocation in args.OldItems)
                 {
@@ -1068,7 +1023,7 @@ namespace Bizio.App
                     var child = currentProjectAllocationsContainer.FindChild($"project-allocation-{allocation.Employee.Person.Id}");
                     currentProjectAllocationsContainer.RemoveChild(child);
 
-                    currentProjectEmployeesContainer.AddChild(CreateButton(allocation.Employee.Person.FullName, (s, e) =>
+                    currentProjectEmployeesContainer.AddChild(_uiService.CreateButton(allocation.Employee.Person.FullName, (s, e) =>
                     {
                         _dataService.CurrentGame.PlayerCompany.Allocations.Add(new Allocation
                         {
@@ -1123,7 +1078,7 @@ namespace Bizio.App
                 Color = Color.Black
             };
 
-            var minus = CreateButton("-", 0, 0, 35, 35, (s, e) =>
+            var minus = _uiService.CreateButton("-", 0, 0, 35, 35, (s, e) =>
             {
                 allocation.Percent -= .1f;
                 if (allocation.Percent < .1f)
@@ -1136,7 +1091,7 @@ namespace Bizio.App
 
             container.AddChild(value);
 
-            var plus = CreateButton("+", 0, 0, 35, 35, (s, e) =>
+            var plus = _uiService.CreateButton("+", 0, 0, 35, 35, (s, e) =>
             {
                 allocation.Percent += .1f;
                 if (allocation.Percent > 1f)
@@ -1147,7 +1102,7 @@ namespace Bizio.App
             });
             container.AddChild(plus);
 
-            var delete = CreateButton("X", 0, 0, 35, 35, (s, e) =>
+            var delete = _uiService.CreateButton("X", 0, 0, 35, 35, (s, e) =>
             {
                 _dataService.CurrentGame.PlayerCompany.Allocations.Remove(allocation);
             });
@@ -1192,7 +1147,7 @@ namespace Bizio.App
 
             foreach (var employee in employees)
             {
-                employeesContainer.AddChild(CreateButton(employee.Person.FullName, (s, e) =>
+                employeesContainer.AddChild(_uiService.CreateButton(employee.Person.FullName, (s, e) =>
                 {
                     _dataService.CurrentGame.PlayerCompany.Allocations.Add(new Allocation
                     {
@@ -1252,7 +1207,7 @@ namespace Bizio.App
             root.AddChild(salaryLabel);
 
             // Fire
-            var fireButton = CreateButton("Fire", OnFireEmployee, new DataEventArgs<Employee>(employee));
+            var fireButton = _uiService.CreateButton("Fire", OnFireEmployee, new DataEventArgs<Employee>(employee));
             fireButton.IsEnabled = !employee.IsFounder;
             root.AddChild(fireButton);
 
@@ -1310,7 +1265,7 @@ namespace Bizio.App
                 Exit();
             }
 
-            _visualRoot.Update();
+            _uiService.Update();
 
             base.Update(gameTime);
         }
@@ -1321,39 +1276,11 @@ namespace Bizio.App
 
             _spriteBatch.Begin();
 
-            _visualRoot.Render(_spriteBatch);
+            _uiService.Render(_spriteBatch);
 
             _spriteBatch.End();
 
             base.Draw(gameTime);
-        }
-
-        private Button CreateButton(string text, int x, int y, int width, int height, EventHandler handler, EventArgs args = null)
-        {
-            var metadata = _resourceService.Get<ButtonMetadata>("button-metadata-default");
-
-            var button = new Button(metadata)
-            {
-                Text = text,
-                Position = new Vector2(x, y),
-                Dimensions = new Vector2(width, height),
-                Args = args ?? EventArgs.Empty
-            };
-
-            button.Clicked += handler;
-
-            return button;
-        }
-
-        private Button CreateButton<T>(string text, EventHandler<T> handler, T args = null)
-            where T : EventArgs
-        {
-            return CreateButton(text, 0, 0, 300, 50, (s, e) => handler?.Invoke(s, e as T), args);
-        }
-
-        private Button CreateButton(string text, EventHandler handler, EventArgs args = null)
-        {
-            return CreateButton(text, 0, 0, 300, 50, handler, args);
         }
     }
 }

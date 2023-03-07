@@ -11,6 +11,7 @@ namespace Bizio.App
                 .AddSingleton<IResourceService, ResourceService>()
                 .AddSingleton<IDataService, DataService>()
                 .AddSingleton<ILoggingService, LoggingService>()
+                .AddSingleton<IUiService, UiService>()
                 .AddTransient<IRunnable, BizioGame>();
 
             using (var provider = services.BuildServiceProvider())
