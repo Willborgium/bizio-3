@@ -191,8 +191,10 @@ namespace Bizio.App.UI
             return count;
         }
 
-        public void Update()
+        public override void Update()
         {
+            base.Update();
+
             var updateables = _updateables.ToList();
 
             foreach (var updateable in updateables)

@@ -5,7 +5,7 @@ using System;
 
 namespace Bizio.App.UI
 {
-    public class Button : UiComponent, IUpdateable, IMeasurable
+    public class Button : UiComponent, IMeasurable
     {
         public bool IsEnabled { get; set; }
 
@@ -25,8 +25,10 @@ namespace Bizio.App.UI
             IsEnabled = true;
         }
 
-        public void Update()
+        public override void Update()
         {
+            base.Update();
+
             if (!CanBeClicked())
             {
                 _state = ButtonState.Default;
