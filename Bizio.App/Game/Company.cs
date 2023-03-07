@@ -12,6 +12,7 @@ namespace Bizio.App.Game
         public bool IsPlayerCompany { get; set; }
         public float Money { get; set; }
         public ObservableCollection<Project> Projects { get; set; }
+        public ObservableCollection<Project> ArchivedProjects { get; set; }
         public Employee Founder => Employees?.FirstOrDefault(e => e.IsFounder);
         public ObservableCollection<Allocation> Allocations { get; set; }
 
@@ -19,6 +20,7 @@ namespace Bizio.App.Game
         {
             Employees = new();
             Projects = new();
+            ArchivedProjects = new();
             Allocations = new();
         }
     }

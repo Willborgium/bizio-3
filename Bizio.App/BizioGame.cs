@@ -133,45 +133,49 @@ namespace Bizio.App
             };
             _resourceService.Set("headline-container", container);
 
-            var currentTurn = new TextBox
+            var currentTurn = new LiveTextBox
             {
                 Color = Color.Black,
-                Font = font
+                Font = font,
+                TextGetter = () => $"Turn {_dataService.CurrentGame?.Turn}"
             };
             container.AddChild(currentTurn);
             _resourceService.Set("current-turn-textbox", currentTurn);
 
-            var companyName = new TextBox
+            var companyName = new LiveTextBox
             {
                 Color = Color.Black,
                 Font = font,
-
+                TextGetter = () => _dataService.CurrentGame?.PlayerCompany?.Name
             };
             container.AddChild(companyName);
             _resourceService.Set("company-name-textbox", companyName);
 
-            var companyMoney = new TextBox
+            var companyMoney = new LiveTextBox
             {
                 Color = Color.Black,
-                Font = font
+                Font = font,
+                TextGetter = () => $"${_dataService.CurrentGame?.PlayerCompany?.Money:0.00}"
             };
             container.AddChild(companyMoney);
             _resourceService.Set("company-money-textbox", companyMoney);
 
-            var employeeCount = new LabeledTextBox
+            var employeeCount = new LiveLabeledTextBox
             {
                 Color = Color.Black,
                 Font = font,
-                Label = "Employees: "
+                Label = "Employees: ",
+                TextGetter = () => $"{_dataService.CurrentGame?.PlayerCompany?.Employees.Count}"
             };
             container.AddChild(employeeCount);
             _resourceService.Set("employee-count-textbox", employeeCount);
 
-            var projectCount = new LabeledTextBox
+            var projectCount = new LiveLabeledTextBox
             {
                 Color = Color.Black,
                 Font = font,
-                Label = "Projects: "
+                Label = "Projects: ",
+                TextGetter = () => $"{_dataService.CurrentGame?.PlayerCompany?.Projects.Count}"
             };
             container.AddChild(projectCount);
             _resourceService.Set("project-count-textbox", projectCount);
@@ -259,8 +263,6 @@ namespace Bizio.App
             headlineContainer.IsVisible = true;
 
             (sender as Button).IsEnabled = false;
-
-            UpdateHeadlineContainer();
         }
 
         private void NextTurn(object sender, EventArgs e)
@@ -318,19 +320,27 @@ namespace Bizio.App
                     }
                 }
 
-                foreach (var project in company.Projects)
-                {
-                    if (project.Status != ProjectStatus.InProgress)
-                    {
-                        continue;
-                    }
+                var currentProjects = company.Projects.ToList();
 
+                foreach (var project in currentProjects)
+                {
                     var isComplete = project.Requirements.All(r => r.CurrentAmount >= r.TargetAmount);
 
                     if (isComplete)
                     {
                         company.Money += project.Value;
                         project.Status = ProjectStatus.Completed;
+
+                        var toRemove = company.Allocations.Where(a => a.Project == project).ToList();
+
+                        foreach (var allocation in toRemove)
+                        {
+                            company.Allocations.Remove(allocation);
+                        }
+
+                        company.ArchivedProjects.Add(project);
+                        company.Projects.Remove(project);
+
                         continue;
                     }
 
@@ -345,36 +355,15 @@ namespace Bizio.App
                             company.Allocations.Remove(allocation);
                         }
 
+                        company.ArchivedProjects.Add(project);
+                        company.Projects.Remove(project);
+
                         continue;
                     }
                 }
             }
 
             _dataService.CurrentGame.Turn++;
-
-            var currentTurnTextBox = _resourceService.Get<TextBox>("current-turn-textbox");
-            currentTurnTextBox.IsVisible = true;
-            currentTurnTextBox.Text = $"Turn {_dataService.CurrentGame.Turn}";
-
-            UpdateHeadlineContainer();
-        }
-
-        private void UpdateHeadlineContainer()
-        {
-            var currentTurnTextBox = _resourceService.Get<TextBox>("current-turn-textbox");
-            currentTurnTextBox.Text = $"Turn {_dataService.CurrentGame.Turn}";
-
-            var companyNameTextBox = _resourceService.Get<TextBox>("company-name-textbox");
-            companyNameTextBox.Text = _dataService.CurrentGame.PlayerCompany.Name;
-
-            var companyMoneyTextBox = _resourceService.Get<TextBox>("company-money-textbox");
-            companyMoneyTextBox.Text = $"${_dataService.CurrentGame.PlayerCompany.Money:0.00}";
-
-            var employeeCountTextBox = _resourceService.Get<LabeledTextBox>("employee-count-textbox");
-            employeeCountTextBox.Text = $"{_dataService.CurrentGame.PlayerCompany.Employees.Count}";
-
-            var projectCountTextBox = _resourceService.Get<LabeledTextBox>("project-count-textbox");
-            projectCountTextBox.Text = $"{_dataService.CurrentGame.PlayerCompany.Projects.Count}";
         }
 
         // Projects
@@ -829,6 +818,12 @@ namespace Bizio.App
                     _loggingService.Info($"Removing player project {project.Id}: {project.Name}");
                     var child = container.FindChild($"my-company-view-project-{project.Id}");
                     container.RemoveChild(child);
+                    var currentProject = _resourceService.Get<Project>("previous-my-company-project");
+                    if (currentProject == project)
+                    {
+                        var projectDetailsContainer = _uiService.FindChild<VisualContainer>("container-my-company-project-details");
+                        projectDetailsContainer.Parent.RemoveChild(projectDetailsContainer);
+                    }
                 }
             }
 
@@ -874,7 +869,8 @@ namespace Bizio.App
         {
             var projectContainer = new VisualContainer
             {
-                Position = new Vector2(800, 100)
+                Position = new Vector2(800, 100),
+                Locator = "container-my-company-project-details"
             };
 
             _resourceService.Set("container-my-company-project-details", projectContainer);
@@ -965,14 +961,14 @@ namespace Bizio.App
             {
                 var skill = _dataService.StaticData.Skills.First(s => s.Id == requirement.SkillId);
 
-                var requirementLabel = new LabeledTextBox
+                var requirementLabel = new LiveLabeledTextBox
                 {
                     Font = font,
                     Color = Color.Black,
                     Position = new Vector2(50, 0),
                     Label = skill.Name,
                     LabelWidth = 75,
-                    Text = $"{requirement.CurrentAmount:0.0} / {requirement.TargetAmount:0.0}"
+                    TextGetter = () => $"{requirement.CurrentAmount:0.0} / {requirement.TargetAmount:0.0}"
                 };
 
                 requirements.AddChild(requirementLabel);
