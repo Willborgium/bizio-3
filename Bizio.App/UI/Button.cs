@@ -5,33 +5,23 @@ using System;
 
 namespace Bizio.App.UI
 {
-    public class Button : IUpdateable, IRenderable, ITranslatable, IMeasurable, ILocatable
+    public class Button : UiComponent, IUpdateable, IMeasurable
     {
-        public bool IsVisible { get; set; }
-
-        public int ZIndex { get; set; }
-
         public bool IsEnabled { get; set; }
 
         public string Text { get; set; }
-
-        public IContainer Parent { get; set; }
-
-        public Vector2 Position { get; set; }
 
         public Vector2 Dimensions { get; set; }
 
         public EventArgs Args { get; set; }
 
-        public string Locator { get; set; }
-
         public event EventHandler Clicked;
 
         public Button(ButtonMetadata metadata)
+            : base()
         {
             _metadata = metadata;
             _state = ButtonState.Default;
-            IsVisible = true;
             IsEnabled = true;
         }
 
@@ -67,7 +57,7 @@ namespace Bizio.App.UI
             _state = nextState;
         }
 
-        public void Render(SpriteBatch renderer)
+        protected override void RenderInternal(SpriteBatch renderer)
         {
             var source = IsEnabled ? _metadata.DefaultSource : _metadata.DisabledSource;
 

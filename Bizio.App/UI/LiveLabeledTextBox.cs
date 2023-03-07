@@ -4,17 +4,9 @@ using System;
 
 namespace Bizio.App.UI
 {
-    public class LiveLabeledTextBox : IRenderable, ITranslatable, IMeasurable
+    public class LiveLabeledTextBox : UiComponent, IMeasurable
     {
-        public bool IsVisible { get; set; }
-
-        public int ZIndex { get; set; }
-
-        public IContainer Parent { get; set; }
-
         public SpriteFont Font { get; set; }
-
-        public Vector2 Position { get; set; }
 
         public Color Color { get; set; }
 
@@ -31,11 +23,11 @@ namespace Bizio.App.UI
         public Vector2 Dimensions => GetDimensions();
 
         public LiveLabeledTextBox()
+            : base()
         {
-            IsVisible = true;
         }
 
-        public void Render(SpriteBatch renderer)
+        protected override void RenderInternal(SpriteBatch renderer)
         {
             var position = Parent?.GetChildAbsolutePosition(this) ?? Position;
 

@@ -7,21 +7,11 @@ using System.Linq;
 
 namespace Bizio.App.UI
 {
-    public abstract class ContainerBase : IContainer, IMeasurable, ITranslatable, ILocatable
+    public abstract class ContainerBase : UiComponent, IContainer, IMeasurable
     {
-        public bool IsVisible { get; set; }
-
-        public int ZIndex { get; set; }
-
-        public IContainer Parent { get; set; }
-
-        public Vector2 Position { get; set; }
-
         public Vector2 Dimensions => _dimensions;
 
         public event EventHandler ChildrenChanged;
-
-        public string Locator { get; set; }
 
         public ContainerBase()
         {
@@ -163,26 +153,6 @@ namespace Bizio.App.UI
             return null;
         }
 
-        public virtual void Render(SpriteBatch renderer)
-        {
-            foreach (var renderable in _renderables.OrderBy(r => r.ZIndex))
-            {
-                if (!renderable.IsVisible)
-                {
-                    continue;
-                }
-
-                renderable.Render(renderer);
-            }
-
-            if (!_renderables.Any())
-            {
-                DebuggingService.DrawEmptyContainerText(renderer, GetCurrentPosition());
-            }
-
-            DebuggingService.DrawRectangle(renderer, GetCurrentPosition(), Dimensions);
-        }
-
         public int GetChildCount<T>(bool isRecursive)
         {
             var count = 0;
@@ -232,6 +202,21 @@ namespace Bizio.App.UI
         }
 
         public abstract Vector2 GetChildAbsolutePosition(ITranslatable child);
+
+        protected override void RenderInternal(SpriteBatch renderer)
+        {
+            foreach (var renderable in _renderables.OrderBy(r => r.ZIndex))
+            {
+                renderable.Render(renderer);
+            }
+
+            if (!_renderables.Any())
+            {
+                DebuggingService.DrawEmptyContainerText(renderer, GetCurrentPosition());
+            }
+
+            DebuggingService.DrawRectangle(renderer, GetCurrentPosition(), Dimensions);
+        }
 
         protected Vector2 GetCurrentPosition()
         {

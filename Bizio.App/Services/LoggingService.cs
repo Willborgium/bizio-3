@@ -40,6 +40,11 @@ namespace Bizio.App.Services
 
         public void Render(SpriteBatch renderer)
         {
+            if (!IsVisible)
+            {
+                return;
+            }
+
             var offset = _font.LineSpacing * 1.2f;
 
             var position = new Vector2(5, 5);
