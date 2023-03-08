@@ -143,46 +143,46 @@ namespace Bizio.App
                 Locator = "container-headline"
             };
 
-            var currentTurn = new LiveTextBox
+            var currentTurn = new TextBox
             {
                 Color = Color.Black,
-                Font = font,
-                TextGetter = () => $"Turn {_dataService.CurrentGame?.Turn}"
+                Font = font
             };
+            currentTurn.Bind(x => x.Text = $"Turn {_dataService.CurrentGame?.Turn}");
             container.AddChild(currentTurn);
 
-            var companyName = new LiveTextBox
+            var companyName = new TextBox
             {
                 Color = Color.Black,
-                Font = font,
-                TextGetter = () => _dataService.CurrentGame?.PlayerCompany?.Name
+                Font = font
             };
+            companyName.Bind(x => x.Text = _dataService.CurrentGame?.PlayerCompany?.Name);
             container.AddChild(companyName);
 
-            var companyMoney = new LiveTextBox
+            var companyMoney = new TextBox
             {
                 Color = Color.Black,
-                Font = font,
-                TextGetter = () => $"${_dataService.CurrentGame?.PlayerCompany?.Money:0.00}"
+                Font = font
             };
+            companyMoney.Bind(x => x.Text = $"${_dataService.CurrentGame?.PlayerCompany?.Money:0.00}");
             container.AddChild(companyMoney);
 
-            var employeeCount = new LiveLabeledTextBox
+            var employeeCount = new LabeledTextBox
             {
                 Color = Color.Black,
                 Font = font,
-                Label = "Employees: ",
-                TextGetter = () => $"{_dataService.CurrentGame?.PlayerCompany?.Employees.Count}"
+                Label = "Employees: "
             };
+            employeeCount.Bind(x => x.Text = $"{_dataService.CurrentGame?.PlayerCompany?.Employees.Count}");
             container.AddChild(employeeCount);
 
-            var projectCount = new LiveLabeledTextBox
+            var projectCount = new LabeledTextBox
             {
                 Color = Color.Black,
                 Font = font,
-                Label = "Projects: ",
-                TextGetter = () => $"{_dataService.CurrentGame?.PlayerCompany?.Projects.Count}"
+                Label = "Projects: "
             };
+            projectCount.Bind(x => x.Text = $"{_dataService.CurrentGame?.PlayerCompany?.Projects.Count}");
             container.AddChild(projectCount);
 
             var nextTurnButton = _uiService.CreateButton("Next Turn", 0, 0, 200, 50, NextTurn);
@@ -952,15 +952,15 @@ namespace Bizio.App
             {
                 var skill = _dataService.StaticData.Skills.First(s => s.Id == requirement.SkillId);
 
-                var requirementLabel = new LiveLabeledTextBox
+                var requirementLabel = new LabeledTextBox
                 {
                     Font = font,
                     Color = Color.Black,
                     Position = new Vector2(50, 0),
                     Label = skill.Name,
-                    LabelWidth = 75,
-                    TextGetter = () => $"{requirement.CurrentAmount:0.0} / {requirement.TargetAmount:0.0}"
+                    LabelWidth = 75
                 };
+                requirementLabel.Bind(x => x.Text = $"{requirement.CurrentAmount:0.0} / {requirement.TargetAmount:0.0}");
 
                 requirements.AddChild(requirementLabel);
             }
