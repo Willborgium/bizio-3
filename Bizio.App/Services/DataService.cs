@@ -18,19 +18,15 @@ namespace Bizio.App.Services
             StaticData = LoadDataFromFile<StaticData>(StaticDataFilePath);
         }
 
-        public void InitializeNewGame(Action<GameData> globalInitializeHook, Action<Company> playerCompanyInitializeHook)
+        public void InitializeNewGame(Action<Company> playerCompanyInitializeHook)
         {
             var gameData = new GameData();
-
-            globalInitializeHook?.Invoke(gameData);
 
             var personBatchSize = StaticData.NewGamePeopleBatchSize.Random();
 
             for (var personIndex = 0; personIndex < personBatchSize; personIndex++)
             {
-                var person = GeneratePerson();
-
-                gameData.People.Add(person);
+                gameData.People.Add(GeneratePerson());
             }
 
             var companyBatchSize = StaticData.NewGameCompanyBatchSize.Random();
@@ -53,34 +49,32 @@ namespace Bizio.App.Services
 
             var projectBatchSize = StaticData.NewGameProjectBatchSize.Random();
 
-            for (var projectIndex = 0; projectIndex < projectBatchSize; projectIndex++)
+            while (projectBatchSize > 0)
             {
-                var project = new Project
-                {
-                    Id = Guid.NewGuid(),
-                    Name = $"Project {projectIndex + 1}",
-                    Description = $"Description on project {projectIndex + 1}",
-                    TurnDue = gameData.Turn + _r.Next(5, 10),
-                    Value = (float)Math.Round(_r.NextDouble() + .1, 1) * 500f
-                };
-
-                var requirementCount = _r.Next(1, StaticData.Skills.Count);
-
-                for (var requirementIndex = 0; requirementIndex < requirementCount; requirementIndex++)
-                {
-                    var requirement = new ProjectRequirement
-                    {
-                        SkillId = StaticData.Skills.Where(s => !project.Requirements.Any(r => r.SkillId == s.Id)).Random().Id,
-                        TargetAmount = (float)Math.Round(_r.NextDouble() + .1, 1) * 100f
-                    };
-
-                    project.Requirements.Add(requirement);
-                }
-
-                gameData.Projects.Add(project);
+                gameData.Projects.Add(GenerateProject(gameData.Turn));
+                projectBatchSize--;
             }
 
             CurrentGame = gameData;
+        }
+
+        public void ProcessTurn()
+        {
+            if (CurrentGame.Turn % 5 == 0)
+            {
+                while (CurrentGame.People.Count < 10)
+                {
+                    CurrentGame.People.Add(GeneratePerson());
+                }
+
+                var projectBatchSize = StaticData.NewGameProjectBatchSize.Random();
+
+                while (projectBatchSize > 0)
+                {
+                    CurrentGame.Projects.Add(GenerateProject(CurrentGame.Turn));
+                    projectBatchSize--;
+                }
+            }
         }
 
         private Person GeneratePerson()
@@ -116,6 +110,36 @@ namespace Bizio.App.Services
             }
 
             return person;
+        }
+
+        private Project GenerateProject(int currentTurn)
+        {
+            var id = Guid.NewGuid();
+            var idString = id.ToString()[30..];
+
+            var project = new Project
+            {
+                Id = id,
+                Name = $"Project {idString}",
+                Description = $"Description of project {idString}",
+                TurnDue = currentTurn + _r.Next(5, 10),
+                Value = (float)Math.Round(_r.NextDouble() + .1, 1) * 500f
+            };
+
+            var requirementCount = _r.Next(1, StaticData.Skills.Count);
+
+            for (var requirementIndex = 0; requirementIndex < requirementCount; requirementIndex++)
+            {
+                var requirement = new ProjectRequirement
+                {
+                    SkillId = StaticData.Skills.Where(s => !project.Requirements.Any(r => r.SkillId == s.Id)).Random().Id,
+                    TargetAmount = (float)Math.Round(_r.NextDouble() + .1, 1) * 100f
+                };
+
+                project.Requirements.Add(requirement);
+            }
+
+            return project;
         }
 
         private void InitializeCompany(Company company, IEnumerable<Person> people)

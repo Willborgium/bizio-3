@@ -9,6 +9,7 @@ namespace Bizio.App.Services
         StaticData StaticData { get; }
 
         void Initialize();
-        void InitializeNewGame(Action<GameData> globalInitializeHook, Action<Company> playerCompanyInitializeHook);
+        void InitializeNewGame(Action<Company> playerCompanyInitializeHook);
+        void ProcessTurn();
     }
 }

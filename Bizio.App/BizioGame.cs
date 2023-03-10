@@ -238,15 +238,8 @@ namespace Bizio.App
         private void StartNewGame(object sender, EventArgs e)
         {
             _dataService.InitializeNewGame(
-                g =>
-                {
-                    g.Projects.CollectionChanged += OnProjectsChanged;
-                    g.People.CollectionChanged += OnPeopleChanged;
-                },
                 c =>
                 {
-                    c.Projects.CollectionChanged += OnCompanyProjectsChanged;
-                    c.Employees.CollectionChanged += OnCompanyEmployeesChanged;
                     c.Allocations.CollectionChanged += OnCompanyAllocationsChanged;
                 }
             );
@@ -364,84 +357,12 @@ namespace Bizio.App
                 }
             }
 
+            _dataService.ProcessTurn();
+
             _dataService.CurrentGame.Turn++;
         }
 
-        // Projects
-
-        private void OnProjectsChanged(object sender, NotifyCollectionChangedEventArgs e)
-        {
-            var projectContainer = _uiService.FindChild<ContainerBase>("container-projects");
-
-            if (e.OldItems != null)
-            {
-                foreach (Project project in e.OldItems)
-                {
-                    _loggingService.Info($"Removing project {project.Id}: {project.Name}");
-                    RemoveProject(project, projectContainer);
-                }
-            }
-
-            if (e.NewItems != null)
-            {
-                foreach (Project project in e.NewItems)
-                {
-                    _loggingService.Info($"Adding project {project.Id}: {project.Name}");
-                    AddProject(project, projectContainer);
-                }
-            }
-        }
-
-        private void AddProject(Project project, IContainer container)
-        {
-            var button = _uiService.CreateButton(project.Name, ToggleProject, new DataEventArgs<Project>(project));
-            button.Identifier = $"project-accept-button-{project.Id}";
-            container.AddChild(button);
-        }
-
-        private static void RemoveProject(Project project, IContainer container)
-        {
-            container.RemoveChild($"project-accept-button-{project.Id}");
-        }
-
         // People
-
-        private void OnPeopleChanged(object sender, NotifyCollectionChangedEventArgs e)
-        {
-            var container = _uiService.FindChild<ContainerBase>("container-people");
-
-            if (e.OldItems != null)
-            {
-                foreach (Person person in e.OldItems)
-                {
-                    _loggingService.Info($"Removing person {person.Id}: {person.FullName}");
-                    RemovePerson(person, container);
-                }
-            }
-
-            if (e.NewItems != null)
-            {
-                foreach (Person person in e.NewItems)
-                {
-                    _loggingService.Info($"Adding person {person.Id}: {person.FullName}");
-                    AddPerson(person, container);
-                }
-            }
-        }
-
-        private void AddPerson(Person person, IContainer container)
-        {
-            _loggingService.Info($"Adding person {person.Id}: {person.FullName}");
-            var button = _uiService.CreateButton($"{person.FullName}", TogglePerson, new DataEventArgs<Person>(person));
-            button.Identifier = $"person-{person.Id}";
-            container.AddChild(button);
-        }
-
-        private static void RemovePerson(Person person, IContainer container)
-        {
-            container.RemoveChild($"person-{person.Id}");
-        }
-
         private void TogglePeopleList(object sender, EventArgs e) => ToggleContainer("container-people");
 
         private void TogglePerson(object sender, DataEventArgs<Person> args)
@@ -464,12 +385,20 @@ namespace Bizio.App
 
         private IRenderable CreatePeopleContainer()
         {
-            return new StackContainer
+            var container = new StackContainer
             {
                 Position = new Vector2(0, 100),
                 Padding = new Vector4(20, 5, 20, 5),
                 Identifier = "container-people"
             };
+
+            container.BindCollection(
+                () => _dataService.CurrentGame,
+                g => g.People,
+                p => _uiService.CreateButton($"{p.FullName}", TogglePerson, new DataEventArgs<Person>(p))
+            );
+
+            return container;
         }
 
         private IRenderable CreatePersonDetailsContainer(Person person)
@@ -592,6 +521,12 @@ namespace Bizio.App
                 Padding = new Vector4(20, 5, 20, 5),
                 Identifier = "container-projects"
             };
+
+            container.BindCollection(
+                () => _dataService.CurrentGame,
+                g => g.Projects,
+                p => _uiService.CreateButton(p.Name, ToggleProject, new DataEventArgs<Project>(p))
+            );
 
             return container;
         }
@@ -733,24 +668,41 @@ namespace Bizio.App
 
         private IContainer CreateMyCompanyProjectsContainer()
         {
-            return new StackContainer
+            var container = new StackContainer
             {
                 Position = new Vector2(400, 100),
                 Direction = LayoutDirection.Vertical,
                 Padding = new Vector4(0, 5, 0, 5),
                 Identifier = "container-my-company-projects"
             };
+
+            container.BindCollection(
+                () => _dataService.CurrentGame,
+                g => g.PlayerCompany.Projects,
+                p => _uiService.CreateButton(p.Name, ToggleCompanyProject, new DataEventArgs<Project>(p))
+            );
+
+
+            return container;
         }
 
         private IContainer CreateMyCompanyEmployeesContainer()
         {
-            return new StackContainer
+            var container = new StackContainer
             {
                 Position = new Vector2(400, 100),
                 Direction = LayoutDirection.Vertical,
                 Padding = new Vector4(0, 5, 0, 5),
                 Identifier = "container-my-company-employees"
             };
+
+            container.BindCollection(
+                () => _dataService.CurrentGame,
+                g => g.PlayerCompany.Employees,
+                e => _uiService.CreateButton(e.Person.FullName, ToggleCompanyEmployee, new DataEventArgs<Employee>(e))
+            );
+
+            return container;
         }
 
         private void ToggleCompanyProjects(object sender, EventArgs e) => ToggleContainer("container-my-company-projects", "container-my-company");
@@ -789,62 +741,6 @@ namespace Bizio.App
 
             _resourceService.Set("my-company-selected-employee", args.Data);
             _uiService.FindChild<ContainerBase>("container-my-company-employee-details").IsVisible = true;
-        }
-
-        private void OnCompanyProjectsChanged(object sender, NotifyCollectionChangedEventArgs e)
-        {
-            var container = _uiService.FindChild<ContainerBase>("container-my-company-projects");
-
-            if (e.OldItems != null)
-            {
-                foreach (Project project in e.OldItems)
-                {
-                    _loggingService.Info($"Removing player project {project.Id}: {project.Name}");
-                    container.RemoveChild($"my-company-view-project-{project.Id}");
-                    var currentProject = _resourceService.Get<Project>("previous-my-company-project");
-                    if (currentProject == project)
-                    {
-                        var projectDetailsContainer = _uiService.FindChild<ContainerBase>("container-my-company-project-details");
-                        projectDetailsContainer.Parent.RemoveChild("container-my-company-project-details");
-                    }
-                }
-            }
-
-            if (e.NewItems != null)
-            {
-                foreach (Project project in e.NewItems)
-                {
-                    _loggingService.Info($"Adding player project {project.Id}: {project.Name}");
-                    var button = _uiService.CreateButton(project.Name, ToggleCompanyProject, new DataEventArgs<Project>(project));
-                    button.Identifier = $"my-company-view-project-{project.Id}";
-                    container.AddChild(button);
-                }
-            }
-        }
-
-        private void OnCompanyEmployeesChanged(object sender, NotifyCollectionChangedEventArgs e)
-        {
-            var container = _uiService.FindChild<ContainerBase>("container-my-company-employees");
-
-            if (e.OldItems != null)
-            {
-                foreach (Employee employee in e.OldItems)
-                {
-                    _loggingService.Info($"Removing player employee {employee.Person.Id}");
-                    container.RemoveChild($"my-company-view-employee-{employee.Person.Id}");
-                }
-            }
-
-            if (e.NewItems != null)
-            {
-                foreach (Employee employee in e.NewItems)
-                {
-                    _loggingService.Info($"Adding player employee {employee.Person.Id}");
-                    var button = _uiService.CreateButton(employee.Person.FullName, ToggleCompanyEmployee, new DataEventArgs<Employee>(employee));
-                    button.Identifier = $"my-company-view-employee-{employee.Person.Id}";
-                    container.AddChild(button);
-                }
-            }
         }
 
         private IContainer CreateCompanyProjectDetailsContainer(Project project)
@@ -1006,7 +902,6 @@ namespace Bizio.App
                         });
                         currentProjectEmployeesContainer.RemoveChild(s as IIdentifiable);
                     }));
-
                 }
             }
 
