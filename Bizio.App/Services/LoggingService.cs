@@ -11,6 +11,8 @@ namespace Bizio.App.Services
 
         public int ZIndex { get; set; } = int.MaxValue;
 
+        public string Identifier { get; set; }
+
         public LoggingService()
         {
             _messages = new List<Message>();

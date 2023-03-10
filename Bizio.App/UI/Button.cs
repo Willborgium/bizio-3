@@ -5,13 +5,11 @@ using System;
 
 namespace Bizio.App.UI
 {
-    public class Button : UiComponent, IMeasurable
+    public class Button : UiComponent
     {
         public bool IsEnabled { get; set; }
 
         public string Text { get; set; }
-
-        public Vector2 Dimensions { get; set; }
 
         public EventArgs Args { get; set; }
 
@@ -23,6 +21,11 @@ namespace Bizio.App.UI
             _metadata = metadata;
             _state = ButtonState.Default;
             IsEnabled = true;
+        }
+
+        public void SetDimensions(Vector2 dimensions)
+        {
+            _dimensions = dimensions;
         }
 
         public override void Update()
@@ -82,6 +85,8 @@ namespace Bizio.App.UI
             renderer.DrawString(_metadata.Font, Text, new Vector2(x, y), Color.Black);
         }
 
+        protected override Vector2 GetDimensions() => _dimensions;
+
         private bool CanBeClicked()
         {
             if (!IsEnabled || !IsVisible) return false;
@@ -109,7 +114,7 @@ namespace Bizio.App.UI
         }
 
         private ButtonState _state;
-
+        private Vector2 _dimensions;
         private readonly ButtonMetadata _metadata;
     }
 }

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Bizio.App.Game
 {
@@ -10,6 +10,6 @@ namespace Bizio.App.Game
         public string LastName { get; set; }
         public string FullName => $"{FirstName} {LastName}";
         public Gender Gender { get; set; }
-        public ICollection<PersonSkill> Skills { get; set; } = new List<PersonSkill>();
+        public ObservableCollection<PersonSkill> Skills { get; set; } = new();
     }
 }

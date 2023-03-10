@@ -20,9 +20,9 @@ namespace Bizio.App.Services
             {
                 Text = text,
                 Position = new Vector2(x, y),
-                Dimensions = new Vector2(width, height),
                 Args = args ?? EventArgs.Empty
             };
+            button.SetDimensions(new Vector2(width, height));
 
             button.Clicked += handler;
 

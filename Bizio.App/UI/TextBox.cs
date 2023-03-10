@@ -11,12 +11,12 @@ namespace Bizio.App.UI
 
         public string Text { get; set; }
 
-        public Vector2 Dimensions => Font?.MeasureString(Text ?? string.Empty) ?? Vector2.Zero;
-
         public TextBox()
             : base()
         {
         }
+
+        protected override Vector2 GetDimensions() => Font?.MeasureString(Text ?? string.Empty) ?? Vector2.Zero;
 
         protected override void RenderInternal(SpriteBatch renderer)
         {

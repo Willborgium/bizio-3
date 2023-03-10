@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Bizio.App.UI
 {
-    public class LabeledTextBox : UiComponent, IMeasurable
+    public class LabeledTextBox : UiComponent
     {
         public SpriteFont Font { get; set; }
 
@@ -16,8 +16,6 @@ namespace Bizio.App.UI
         public float LabelWidth { get; set; }
 
         public float TextWidth { get; set; }
-
-        public Vector2 Dimensions => GetDimensions();
 
         public LabeledTextBox()
             : base()
@@ -35,7 +33,7 @@ namespace Bizio.App.UI
             renderer.DrawString(Font, Text?? string.Empty, position, Color);
         }
 
-        private Vector2 GetDimensions()
+        protected override Vector2 GetDimensions()
         {
             var width = GetLabelWidth();
 

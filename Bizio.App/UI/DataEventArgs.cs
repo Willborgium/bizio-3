@@ -2,7 +2,7 @@
 
 namespace Bizio.App.UI
 {
-    public class DataEventArgs<T> : EventArgs
+    public class DataEventArgs<T> : EventArgs, IDataEventArgs<T>
     {
         public T Data { get; }
 

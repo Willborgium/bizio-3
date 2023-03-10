@@ -7,10 +7,8 @@ using System.Linq;
 
 namespace Bizio.App.UI
 {
-    public abstract class ContainerBase : UiComponent, IContainer, IMeasurable
+    public abstract class ContainerBase : UiComponent, IContainer
     {
-        public Vector2 Dimensions => _dimensions;
-
         public event EventHandler ChildrenChanged;
 
         public ContainerBase()
@@ -18,7 +16,7 @@ namespace Bizio.App.UI
             IsVisible = true;
         }
 
-        public void AddChild<T>(T child)
+        public void AddChild(IIdentifiable child)
         {
             if (!CanAddChild(child))
             {
@@ -88,7 +86,7 @@ namespace Bizio.App.UI
             return true;
         }
 
-        public void RemoveChild<T>(T child)
+        public void RemoveChild(IIdentifiable child)
         {
             if (child == null)
             {
@@ -127,21 +125,32 @@ namespace Bizio.App.UI
             ChildrenChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        public ILocatable FindChild(string locator) => FindChild<ILocatable>(locator);
+        public void RemoveChild(string identifier)
+        {
+            var child = FindChild(identifier);
+            
+            if (child == null)
+            {
+                return;
+            }
 
-        public T FindChild<T>(string locator)
-            where T : class, ILocatable
+            RemoveChild(child);
+        }
+
+        public IIdentifiable FindChild(string identifier) => FindChild<IIdentifiable>(identifier);
+
+        public T FindChild<T>(string identifier)
         {
             foreach (var child in _children)
             {
-                if (child is T t && t.Locator == locator)
+                if (child.Identifier == identifier && child is T t)
                 {
                     return t;
                 }
 
                 if (child is IContainer c)
                 {
-                    var result = c.FindChild<T>(locator);
+                    var result = c.FindChild<T>(identifier);
 
                     if (result != null)
                     {
@@ -150,7 +159,7 @@ namespace Bizio.App.UI
                 }
             }
 
-            return null;
+            return default;
         }
 
         public int GetChildCount<T>(bool isRecursive)
@@ -225,6 +234,8 @@ namespace Bizio.App.UI
             return Parent?.GetChildAbsolutePosition(this) ?? Position;
         }
 
+        protected override Vector2 GetDimensions() => _dimensions;
+
         private void Measure()
         {
             var currentPosition = GetCurrentPosition();
@@ -274,7 +285,7 @@ namespace Bizio.App.UI
 
         private Vector2 _dimensions;
 
-        protected readonly ICollection<object> _children = new HashSet<object>();
+        protected readonly ICollection<IIdentifiable> _children = new HashSet<IIdentifiable>();
         protected readonly ICollection<IRenderable> _renderables = new HashSet<IRenderable>();
         protected readonly ICollection<IUpdateable> _updateables = new HashSet<IUpdateable>();
     }

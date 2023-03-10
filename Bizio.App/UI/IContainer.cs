@@ -5,12 +5,13 @@ namespace Bizio.App.UI
 {
     public interface IContainer : IUpdateable, IRenderable, ITranslatable
     {
-        void AddChild<T>(T child);
-        void RemoveChild<T>(T child);
+        void AddChild(IIdentifiable child);
+        void RemoveChild(IIdentifiable child);
+        void RemoveChild(string identifier);
         int GetChildCount(bool isRecursive);
         int GetChildCount<T>(bool isRecursive);
-        ILocatable FindChild(string locator);
-        T FindChild<T>(string locator) where T : class, ILocatable;
+        IIdentifiable FindChild(string identifier);
+        T FindChild<T>(string identifier);
         Vector2 GetChildAbsolutePosition(ITranslatable child);
         event EventHandler ChildrenChanged;
     }
