@@ -128,7 +128,7 @@ namespace Bizio.App.UI
         public void RemoveChild(string identifier)
         {
             var child = FindChild(identifier);
-            
+
             if (child == null)
             {
                 return;

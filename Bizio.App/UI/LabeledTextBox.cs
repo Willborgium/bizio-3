@@ -30,7 +30,7 @@ namespace Bizio.App.UI
 
             position += new Vector2(GetLabelWidth(), 0);
 
-            renderer.DrawString(Font, Text?? string.Empty, position, Color);
+            renderer.DrawString(Font, Text ?? string.Empty, position, Color);
         }
 
         protected override Vector2 GetDimensions()

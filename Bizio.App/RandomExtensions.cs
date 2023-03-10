@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -46,6 +44,6 @@ namespace Bizio.App
             return range.Minimum + (float)(_r.NextDouble() * difference);
         }
 
-        private static readonly Random _r = new ();
+        private static readonly Random _r = new();
     }
 }

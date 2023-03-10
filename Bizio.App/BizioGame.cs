@@ -6,10 +6,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Reflection;
 
 namespace Bizio.App
 {
@@ -730,8 +728,8 @@ namespace Bizio.App
 
         private void ToggleCompanyEmployee(object sender, IDataEventArgs<Employee> args)
         {
-            var selectedEmployee = _resourceService.Get<Employee>("my-company-selected-employee");   
-            
+            var selectedEmployee = _resourceService.Get<Employee>("my-company-selected-employee");
+
             if (args.Data == null || args.Data == selectedEmployee)
             {
                 _resourceService.Set("my-company-selected-employee", null);
