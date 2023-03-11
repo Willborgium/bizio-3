@@ -1075,6 +1075,10 @@ namespace Bizio.App
                 }
                 value.Text = $"{allocation.Percent:P0}";
             });
+            minus.Bind(
+                () => allocation.Percent > .1f,
+                (b, v) => b.IsEnabled = v
+            );
             container.AddChild(minus);
 
             container.AddChild(value);
@@ -1088,6 +1092,16 @@ namespace Bizio.App
                 }
                 value.Text = $"{allocation.Percent:P0}";
             });
+            plus.Bind(
+                () =>
+                {
+                    return allocation.Percent < 1 &&
+                    _dataService.CurrentGame.PlayerCompany.Allocations
+                    .Where(a => a.Employee == allocation.Employee)
+                    .Sum(a => a.Percent) < 1;
+                },
+                (b, v) => b.IsEnabled = v
+            );
             container.AddChild(plus);
 
             var delete = _uiService.CreateButton("X", 0, 0, 35, 35, (s, e) =>
@@ -1135,16 +1149,26 @@ namespace Bizio.App
 
             foreach (var employee in employees)
             {
-                employeesContainer.AddChild(_uiService.CreateButton(employee.Person.FullName, (s, e) =>
+                var addAllocationButton = _uiService.CreateButton(employee.Person.FullName, (s, e) =>
                 {
                     _dataService.CurrentGame.PlayerCompany.Allocations.Add(new Allocation
                     {
                         Employee = employee,
                         Project = project,
-                        Percent = 1f
+                        Percent = .1f
                     });
                     employeesContainer.RemoveChild(s as IIdentifiable);
-                }));
+                });
+                addAllocationButton.Bind(
+                    () =>
+                    {
+                        return _dataService.CurrentGame.PlayerCompany.Allocations
+                            .Where(a => a.Employee == employee)
+                            .Sum(a => a.Percent) < 1;
+                    },
+                    (b, v) => b.IsEnabled = v
+                );
+                employeesContainer.AddChild(addAllocationButton);
             }
 
             return container;

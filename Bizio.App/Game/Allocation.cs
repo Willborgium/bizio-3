@@ -4,6 +4,6 @@
     {
         public Project Project { get; set; }
         public Employee Employee { get; set; }
-        public float Percent { get; set; }
+        public double Percent { get; set; }
     }
 }
