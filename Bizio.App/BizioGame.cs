@@ -204,6 +204,7 @@ namespace Bizio.App
             "container-my-company-project-details",
             "container-my-company-project-allocations",
             "container-my-company-messages",
+            "container-my-company-message-details",
         };
 
         private void CloseAllContainers(params string[] except)
@@ -688,25 +689,6 @@ namespace Bizio.App
             return myCompanyContainer;
         }
 
-        private IContainer CreateMyCompanyMessagesContainer()
-        {
-            var container = new StackContainer
-            {
-                Position = new Vector2(400, 100),
-                Direction = LayoutDirection.Vertical,
-                Padding = new Vector4(0, 5, 0, 5),
-                Identifier = "container-my-company-messages"
-            };
-
-            container.BindCollection(
-                () => _dataService.CurrentGame,
-                g => g.PlayerCompany.Messages,
-                m => _uiService.CreateButton(m.Subject, (s, e) => { }, new DataEventArgs<Message>(m))
-            );
-
-            return container;
-        }
-
         private IContainer CreateMyCompanyProjectsContainer()
         {
             var container = new StackContainer
@@ -741,6 +723,87 @@ namespace Bizio.App
                 g => g.PlayerCompany.Employees,
                 e => _uiService.CreateButton(e.Person.FullName, ToggleCompanyEmployee, new DataEventArgs<Employee>(e))
             );
+
+            return container;
+        }
+
+        private IContainer CreateMyCompanyMessagesContainer()
+        {
+            var container = new VisualContainer
+            {
+                Position = new Vector2(400, 100),
+                Identifier = "container-my-company-messages"
+            };
+
+            var messagesContainer = new StackContainer
+            {
+                Direction = LayoutDirection.Vertical,
+                Padding = new Vector4(0, 5, 0, 5),
+            };
+
+            container.AddChild(messagesContainer);
+            container.AddChild(CreateCompanyMessageDetailsContainer());
+
+            messagesContainer.BindCollection(
+                () => _dataService.CurrentGame,
+                g => g.PlayerCompany.Messages,
+                m => _uiService.CreateButton(m.Subject, ToggleCompanyMessage, new DataEventArgs<Message>(m))
+            );
+
+            return container;
+        }
+
+        private IContainer CreateCompanyMessageDetailsContainer()
+        {
+            var container = new StackContainer
+            {
+                Position = new Vector2(400, 0),
+                Direction = LayoutDirection.Vertical,
+                Padding = new Vector4(0, 5, 0, 5),
+                Identifier = "container-my-company-message-details"
+            };
+
+            var font = _resourceService.Get<SpriteFont>("font-default");
+
+            var fromLabel = new LabeledTextBox
+            {
+                Font = font,
+                Color = Color.Black,
+                LabelWidth = 75,
+                Label = "From"                
+            };
+            fromLabel.Bind(() => _resourceService.Get<Message>("my-company-selected-message")?.From, (l, m) => l.Text = m);
+            container.AddChild(fromLabel);
+
+            var toLabel = new LabeledTextBox
+            {
+                Font = font,
+                Color = Color.Black,
+                LabelWidth = 75,
+                Label = "To"
+            };
+            toLabel.Bind(() => _resourceService.Get<Message>("my-company-selected-message")?.To, (l, m) => l.Text = m);
+            container.AddChild(toLabel);
+
+            var subjectLabel = new LabeledTextBox
+            {
+                Font = font,
+                Color = Color.Black,
+                LabelWidth = 75,
+                Label = "Subject"
+            };
+            subjectLabel.Bind(() => _resourceService.Get<Message>("my-company-selected-message")?.Subject, (l, m) => l.Text = m);
+            container.AddChild(subjectLabel);
+
+            var bodyLabel = new LabeledTextBox
+            {
+                Font = font,
+                Color = Color.Black,
+                LabelWidth = 75,
+                Label = "Body"
+            };
+            bodyLabel.Bind(() => _resourceService.Get<Message>("my-company-selected-message")?.Body, (l, m) => l.Text = m);
+            container.AddChild(bodyLabel);
 
             return container;
         }
@@ -783,6 +846,21 @@ namespace Bizio.App
 
             _resourceService.Set("my-company-selected-employee", args.Data);
             _uiService.FindChild<ContainerBase>("container-my-company-employee-details").IsVisible = true;
+        }
+
+        private void ToggleCompanyMessage(object sender, DataEventArgs<Message> args)
+        {
+            var selectedMessage = _resourceService.Get<Message>("my-company-selected-message");
+
+            if (args.Data == null || args.Data == selectedMessage)
+            {
+                _resourceService.Set("my-company-selected-message", null);
+                _uiService.FindChild<ContainerBase>("container-my-company-message-details").IsVisible = false;
+                return;
+            }
+
+            _resourceService.Set("my-company-selected-message", args.Data);
+            _uiService.FindChild<ContainerBase>("container-my-company-message-details").IsVisible = true;
         }
 
         private IContainer CreateCompanyProjectDetailsContainer(Project project)
