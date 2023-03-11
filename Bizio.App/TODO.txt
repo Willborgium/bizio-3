@@ -1,0 +1,10 @@
+﻿Refactor
+Add company mailbox
+Convert hire to make offer
+	Create input controls
+	Create popups
+Limit allocations to 100% across projects
+Show allocations on employee details
+Allow changing employee salary
+Obfuscate person skills before employed
+Add interview option

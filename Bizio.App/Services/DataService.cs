@@ -77,6 +77,18 @@ namespace Bizio.App.Services
             }
         }
 
+        public void SendMessage(string from, string subject, string body)
+        {
+            CurrentGame.PlayerCompany.Messages.Add(new Message
+            {
+                TurnSent = CurrentGame.Turn,
+                From = from,
+                To = $"ceo@{CurrentGame.PlayerCompany.Name.ToLower()}.com",
+                Subject = subject,
+                Body = body
+            });
+        }
+
         private Person GeneratePerson()
         {
             var gender = _r.Random<Gender>();

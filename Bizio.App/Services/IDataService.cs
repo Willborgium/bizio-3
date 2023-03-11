@@ -11,5 +11,6 @@ namespace Bizio.App.Services
         void Initialize();
         void InitializeNewGame(Action<Company> playerCompanyInitializeHook);
         void ProcessTurn();
+        void SendMessage(string from, string subject, string body);
     }
 }

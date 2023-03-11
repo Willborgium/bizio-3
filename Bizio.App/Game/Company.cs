@@ -15,6 +15,7 @@ namespace Bizio.App.Game
         public ObservableCollection<Project> ArchivedProjects { get; set; }
         public Employee Founder => Employees?.FirstOrDefault(e => e.IsFounder);
         public ObservableCollection<Allocation> Allocations { get; set; }
+        public ObservableCollection<Message> Messages { get; set; }
 
         public Company()
         {
@@ -22,6 +23,7 @@ namespace Bizio.App.Game
             Projects = new();
             ArchivedProjects = new();
             Allocations = new();
+            Messages = new();
         }
     }
 }

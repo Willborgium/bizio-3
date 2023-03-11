@@ -202,7 +202,8 @@ namespace Bizio.App
             "container-my-company-employee-details",
             "container-my-company-projects",
             "container-my-company-project-details",
-            "container-my-company-project-allocations"
+            "container-my-company-project-allocations",
+            "container-my-company-messages",
         };
 
         private void CloseAllContainers(params string[] except)
@@ -253,6 +254,12 @@ namespace Bizio.App
                 var founder = company.Founder.Person;
                 _loggingService.Info($"Company {company.Id}: {company.Name} founded by {founder.FirstName} {founder.LastName}");
             }
+
+            _dataService.SendMessage(
+                "HR",
+                "Congrats on getting funded!",
+                "Now that you've got some cash, why not hire an employee and try to complete a project?"
+            );
 
             (sender as Button).IsEnabled = false;
         }
@@ -486,6 +493,12 @@ namespace Bizio.App
 
             var details = _uiService.FindChild<UiComponent>("container-person-details");
             details.IsVisible = false;
+
+            _dataService.SendMessage(
+                "HR",
+                $"Hired {person.FullName}",
+                "We landed a great engineer!"
+                );
         }
 
         // Projects
@@ -628,6 +641,12 @@ namespace Bizio.App
 
             var details = _uiService.FindChild<UiComponent>("container-project-details");
             details.IsVisible = false;
+
+            _dataService.SendMessage(
+                "HR",
+                $"New project underway",
+                "We've begun working on a new project"
+                );
         }
 
         // My Company
@@ -656,12 +675,36 @@ namespace Bizio.App
             var projectsButton = _uiService.CreateButton("Projects", ToggleCompanyProjects);
             buttonsContainer.AddChild(projectsButton);
 
+            var messagesButton = _uiService.CreateButton("Messages", ToggleCompanyMessages);
+            buttonsContainer.AddChild(messagesButton);
+
             myCompanyContainer.AddChild(CreateMyCompanyEmployeesContainer());
             myCompanyContainer.AddChild(CreateCompanyEmployeeDetailsContainer());
 
             myCompanyContainer.AddChild(CreateMyCompanyProjectsContainer());
 
+            myCompanyContainer.AddChild(CreateMyCompanyMessagesContainer());
+
             return myCompanyContainer;
+        }
+
+        private IContainer CreateMyCompanyMessagesContainer()
+        {
+            var container = new StackContainer
+            {
+                Position = new Vector2(400, 100),
+                Direction = LayoutDirection.Vertical,
+                Padding = new Vector4(0, 5, 0, 5),
+                Identifier = "container-my-company-messages"
+            };
+
+            container.BindCollection(
+                () => _dataService.CurrentGame,
+                g => g.PlayerCompany.Messages,
+                m => _uiService.CreateButton(m.Subject, (s, e) => { }, new DataEventArgs<Message>(m))
+            );
+
+            return container;
         }
 
         private IContainer CreateMyCompanyProjectsContainer()
@@ -679,7 +722,6 @@ namespace Bizio.App
                 g => g.PlayerCompany.Projects,
                 p => _uiService.CreateButton(p.Name, ToggleCompanyProject, new DataEventArgs<Project>(p))
             );
-
 
             return container;
         }
@@ -706,6 +748,8 @@ namespace Bizio.App
         private void ToggleCompanyProjects(object sender, EventArgs e) => ToggleContainer("container-my-company-projects", "container-my-company");
 
         private void ToggleCompanyEmployees(object sender, EventArgs e) => ToggleContainer("container-my-company-employees", "container-my-company");
+
+        private void ToggleCompanyMessages(object sender, EventArgs e) => ToggleContainer("container-my-company-messages", "container-my-company");
 
         private void ToggleCompanyProject(object sender, DataEventArgs<Project> args)
         {
