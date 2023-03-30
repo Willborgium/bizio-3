@@ -5,6 +5,7 @@ namespace Bizio.App.Services
 {
     public interface IUiService : IRenderable, IContainer
     {
+        void Describe();
         Button CreateButton(string text, int x, int y, int width, int height, EventHandler handler, EventArgs args = null);
         Button CreateButton<T>(string text, EventHandler<T> handler, T args = null)
             where T : EventArgs;

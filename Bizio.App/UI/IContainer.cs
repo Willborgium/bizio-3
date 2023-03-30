@@ -1,9 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 
 namespace Bizio.App.UI
 {
-    public interface IContainer : IUpdateable, IRenderable, ITranslatable
+    public interface IContainer : IUpdateable, IRenderable, ITranslatable, IEnumerable<IIdentifiable>
     {
         void AddChild(IIdentifiable child);
         void RemoveChild(IIdentifiable child);

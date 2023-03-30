@@ -373,7 +373,8 @@ namespace Bizio.App
 
         private void TogglePerson(object sender, DataEventArgs<Person> args)
         {
-            _uiService.RemoveChild("container-person-details");
+            var parent = _uiService.FindChild<IContainer>("container-people");
+            parent.RemoveChild("container-person-details");
             var previousPerson = _resourceService.Get<Person>("previous-person");
 
             if (args.Data == null || args.Data == previousPerson)
@@ -385,20 +386,25 @@ namespace Bizio.App
             _resourceService.Set("previous-person", args.Data);
 
             var currentContainer = CreatePersonDetailsContainer(args.Data);
-
-            _uiService.AddChild(currentContainer);
+            parent.AddChild(currentContainer);
         }
 
         private IRenderable CreatePeopleContainer()
         {
-            var container = new StackContainer
+            var container = new VisualContainer
             {
                 Position = new Vector2(0, 100),
-                Padding = new Vector4(20, 5, 20, 5),
                 Identifier = "container-people"
             };
 
-            container.BindCollection(
+            var dataContainer = new StackContainer
+            {
+                Padding = new Vector4(20, 5, 20, 5)
+            };
+
+            container.AddChild(dataContainer);
+
+            dataContainer.BindCollection(
                 () => _dataService.CurrentGame,
                 g => g.People,
                 p => _uiService.CreateButton($"{p.FullName}", TogglePerson, new DataEventArgs<Person>(p))
@@ -411,7 +417,7 @@ namespace Bizio.App
         {
             var root = new StackContainer
             {
-                Position = new Vector2(400, 100),
+                Position = new Vector2(400, 0),
                 Padding = new Vector4(0, 10, 0, 10),
                 Identifier = "container-person-details"
             };
@@ -508,7 +514,8 @@ namespace Bizio.App
 
         private void ToggleProject(object sender, DataEventArgs<Project> args)
         {
-            _uiService.RemoveChild("container-project-details");
+            var parent = _uiService.FindChild<IContainer>("container-projects");
+            parent.RemoveChild("container-project-details");
 
             var previousProject = _resourceService.Get<Project>("previous-project");
 
@@ -521,20 +528,25 @@ namespace Bizio.App
             _resourceService.Set("previous-project", args.Data);
 
             var currentContainer = CreateProjectDetailsContainer(args.Data);
-
-            _uiService.AddChild(currentContainer);
+            parent.AddChild(currentContainer);
         }
 
         private IRenderable CreateProjectsContainer()
         {
-            var container = new StackContainer
+            var container = new VisualContainer
             {
                 Position = new Vector2(0, 100),
-                Padding = new Vector4(20, 5, 20, 5),
                 Identifier = "container-projects"
             };
 
-            container.BindCollection(
+            var dataContainer = new StackContainer
+            {
+                Padding = new Vector4(20, 5, 20, 5)
+            };
+
+            container.AddChild(dataContainer);
+
+            dataContainer.BindCollection(
                 () => _dataService.CurrentGame,
                 g => g.Projects,
                 p => _uiService.CreateButton(p.Name, ToggleProject, new DataEventArgs<Project>(p))
@@ -547,7 +559,7 @@ namespace Bizio.App
         {
             var root = new StackContainer
             {
-                Position = new Vector2(400, 100),
+                Position = new Vector2(400, 0),
                 Padding = new Vector4(0, 10, 0, 10),
                 Identifier = "container-project-details"
             };
@@ -658,14 +670,14 @@ namespace Bizio.App
         {
             var myCompanyContainer = new VisualContainer
             {
-                Identifier = "container-my-company"
+                Identifier = "container-my-company",
+                Position = new Vector2(0, 100)
             };
 
             var buttonsContainer = new StackContainer
             {
-                Position = new Vector2(0, 100),
                 Direction = LayoutDirection.Vertical,
-                Padding = new Vector4(0, 5, 0, 5)
+                Padding = new Vector4(20, 5, 20, 5)
             };
 
             myCompanyContainer.AddChild(buttonsContainer);
@@ -679,8 +691,9 @@ namespace Bizio.App
             var messagesButton = _uiService.CreateButton("Messages", ToggleCompanyMessages);
             buttonsContainer.AddChild(messagesButton);
 
-            myCompanyContainer.AddChild(CreateMyCompanyEmployeesContainer());
-            myCompanyContainer.AddChild(CreateCompanyEmployeeDetailsContainer());
+            var employeesContainer = CreateMyCompanyEmployeesContainer();
+            myCompanyContainer.AddChild(employeesContainer);
+            employeesContainer.AddChild(CreateCompanyEmployeeDetailsContainer());
 
             myCompanyContainer.AddChild(CreateMyCompanyProjectsContainer());
 
@@ -691,15 +704,21 @@ namespace Bizio.App
 
         private IContainer CreateMyCompanyProjectsContainer()
         {
-            var container = new StackContainer
+            var container = new VisualContainer
             {
-                Position = new Vector2(400, 100),
-                Direction = LayoutDirection.Vertical,
-                Padding = new Vector4(0, 5, 0, 5),
+                Position = new Vector2(400, 0),
                 Identifier = "container-my-company-projects"
             };
 
-            container.BindCollection(
+            var dataContainer = new StackContainer
+            {
+                Direction = LayoutDirection.Vertical,
+                Padding = new Vector4(0, 5, 0, 5)
+            };
+
+            container.AddChild(dataContainer);
+
+            dataContainer.BindCollection(
                 () => _dataService.CurrentGame,
                 g => g.PlayerCompany.Projects,
                 p => _uiService.CreateButton(p.Name, ToggleCompanyProject, new DataEventArgs<Project>(p))
@@ -710,15 +729,21 @@ namespace Bizio.App
 
         private IContainer CreateMyCompanyEmployeesContainer()
         {
-            var container = new StackContainer
+            var container = new VisualContainer
             {
-                Position = new Vector2(400, 100),
-                Direction = LayoutDirection.Vertical,
-                Padding = new Vector4(0, 5, 0, 5),
+                Position = new Vector2(400, 0),
                 Identifier = "container-my-company-employees"
             };
+            
+            var dataContainer = new StackContainer
+            {
+                Direction = LayoutDirection.Vertical,
+                Padding = new Vector4(0, 5, 0, 5)
+            };
 
-            container.BindCollection(
+            container.AddChild(dataContainer);
+
+            dataContainer.BindCollection(
                 () => _dataService.CurrentGame,
                 g => g.PlayerCompany.Employees,
                 e => _uiService.CreateButton(e.Person.FullName, ToggleCompanyEmployee, new DataEventArgs<Employee>(e))
@@ -731,7 +756,7 @@ namespace Bizio.App
         {
             var container = new VisualContainer
             {
-                Position = new Vector2(400, 100),
+                Position = new Vector2(400, 0),
                 Identifier = "container-my-company-messages"
             };
 
@@ -816,7 +841,8 @@ namespace Bizio.App
 
         private void ToggleCompanyProject(object sender, DataEventArgs<Project> args)
         {
-            _uiService.RemoveChild("container-my-company-project-details");
+            var parent = _uiService.FindChild<IContainer>("container-my-company-projects");
+            parent.RemoveChild("container-my-company-project-details");
 
             var previousProject = _resourceService.Get<Project>("previous-my-company-project");
 
@@ -830,22 +856,24 @@ namespace Bizio.App
 
             var currentContainer = CreateCompanyProjectDetailsContainer(args.Data);
 
-            _uiService.AddChild(currentContainer);
+            parent.AddChild(currentContainer);
         }
 
         private void ToggleCompanyEmployee(object sender, IDataEventArgs<Employee> args)
         {
             var selectedEmployee = _resourceService.Get<Employee>("my-company-selected-employee");
 
+            var parent = _uiService.FindChild<IContainer>("container-my-company-employees");
+
             if (args.Data == null || args.Data == selectedEmployee)
             {
                 _resourceService.Set("my-company-selected-employee", null);
-                _uiService.FindChild<ContainerBase>("container-my-company-employee-details").IsVisible = false;
+                parent.FindChild<IContainer>("container-my-company-employee-details").IsVisible = false;
                 return;
             }
 
             _resourceService.Set("my-company-selected-employee", args.Data);
-            _uiService.FindChild<ContainerBase>("container-my-company-employee-details").IsVisible = true;
+            parent.FindChild<IContainer>("container-my-company-employee-details").IsVisible = true;
         }
 
         private void ToggleCompanyMessage(object sender, DataEventArgs<Message> args)
@@ -867,7 +895,7 @@ namespace Bizio.App
         {
             var projectContainer = new VisualContainer
             {
-                Position = new Vector2(800, 100),
+                Position = new Vector2(400, 0),
                 Identifier = "container-my-company-project-details"
             };
 
@@ -1117,7 +1145,7 @@ namespace Bizio.App
         {
             var container = new StackContainer
             {
-                Position = new Vector2(300, 0),
+                Position = new Vector2(400, 0),
                 Padding = new Vector4(0, 10, 0, 10),
                 Identifier = "container-my-company-project-allocations"
             };
@@ -1178,7 +1206,7 @@ namespace Bizio.App
         {
             var root = new StackContainer
             {
-                Position = new Vector2(800, 100),
+                Position = new Vector2(400, 0),
                 Padding = new Vector4(0, 10, 0, 10),
                 Identifier = "container-my-company-employee-details"
             };

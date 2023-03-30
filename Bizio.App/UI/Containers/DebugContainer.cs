@@ -24,14 +24,20 @@ namespace Bizio.App.UI.Containers
 
             AddChild(root);
 
-            root.AddChild(_uiService.CreateButton("Logger", 0, 0, 200, 50, ToggleDebugInfo));
-            root.AddChild(_uiService.CreateButton("Snapshot", 0, 0, 200, 50, LogSnapshot));
-            root.AddChild(_uiService.CreateButton("Outlines", 0, 0, 200, 50, ToggleDebuggingOutlines));
+            root.AddChild(_uiService.CreateButton("Logger", ToggleDebugInfo));
+            root.AddChild(_uiService.CreateButton("Snapshot", LogSnapshot));
+            root.AddChild(_uiService.CreateButton("Outlines", ToggleDebuggingOutlines));
+            root.AddChild(_uiService.CreateButton("Visuals", LogVisuals));
 
             var x = screenWidth - root.Dimensions.X;
             var y = screenHeight - root.Dimensions.Y;
 
             root.Position = new Vector2(x, y);
+        }
+
+        private void LogVisuals(object sender, EventArgs e)
+        {
+            _uiService.Describe();
         }
 
         private void ToggleDebugInfo(object sender, EventArgs e)

@@ -1,4 +1,6 @@
-﻿namespace Bizio.App.UI
+﻿using System;
+
+namespace Bizio.App.UI
 {
     public interface IIdentifiable
     {

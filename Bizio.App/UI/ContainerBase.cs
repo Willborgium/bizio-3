@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -281,6 +282,16 @@ namespace Bizio.App.UI
             }
 
             _dimensions = new Vector2(maxX - minX, maxY - minY);
+        }
+
+        public IEnumerator<IIdentifiable> GetEnumerator()
+        {
+            return _children.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return _children.GetEnumerator();
         }
 
         private Vector2 _dimensions;
