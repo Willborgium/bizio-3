@@ -94,11 +94,16 @@ namespace Bizio.App
             gameContainer.Bind(() => _dataService?.CurrentGame != null, (gc, x) => gc.IsVisible = x);
 
             gameContainer.AddChild(CreateHeadlineContainer());
-            gameContainer.AddChild(CreatePeopleContainer());
-            gameContainer.AddChild(CreateProjectsContainer());
-            gameContainer.AddChild(CreateMyCompanyContainer());
 
-            CloseAllContainers();
+            var gameUiContainer = new ExclusiveVisualContainer
+            {
+                Identifier = "container-game-ui"
+            };
+            gameContainer.AddChild(gameUiContainer);
+
+            gameUiContainer.AddChild(CreatePeopleContainer());
+            gameUiContainer.AddChild(CreateProjectsContainer());
+            gameUiContainer.AddChild(CreateMyCompanyContainer());
 
             _dataService.Initialize();
 
@@ -206,32 +211,6 @@ namespace Bizio.App
             "container-my-company-messages",
             "container-my-company-message-details",
         };
-
-        private void CloseAllContainers(params string[] except)
-        {
-            foreach (var name in ContainerNames)
-            {
-                if (except?.Contains(name) == true)
-                {
-                    continue;
-                }
-
-                var renderable = _uiService.FindChild<UiComponent>(name);
-
-                if (renderable != null)
-                {
-                    renderable.IsVisible = false;
-                }
-            }
-        }
-
-        private void ToggleContainer(string name, params string[] except)
-        {
-            CloseAllContainers(except.Append(name).ToArray());
-
-            var container = _uiService.FindChild<ContainerBase>(name);
-            container.IsVisible = !container.IsVisible;
-        }
 
         // Game state management
 
@@ -369,7 +348,11 @@ namespace Bizio.App
         }
 
         // People
-        private void TogglePeopleList(object sender, EventArgs e) => ToggleContainer("container-people");
+        private void TogglePeopleList(object sender, EventArgs e)
+        {
+            var container = _uiService.FindChild<IRenderable>("container-people");
+            container.IsVisible = !container.IsVisible;
+        }
 
         private void TogglePerson(object sender, DataEventArgs<Person> args)
         {
@@ -394,7 +377,8 @@ namespace Bizio.App
             var container = new VisualContainer
             {
                 Position = new Vector2(0, 100),
-                Identifier = "container-people"
+                Identifier = "container-people",
+                IsVisible = false
             };
 
             var dataContainer = new StackContainer
@@ -510,7 +494,11 @@ namespace Bizio.App
 
         // Projects
 
-        private void ToggleProjectsList(object sender, EventArgs e) => ToggleContainer("container-projects");
+        private void ToggleProjectsList(object sender, EventArgs e)
+        {
+            var container = _uiService.FindChild<IRenderable>("container-projects");
+            container.IsVisible = !container.IsVisible;
+        }
 
         private void ToggleProject(object sender, DataEventArgs<Project> args)
         {
@@ -536,7 +524,8 @@ namespace Bizio.App
             var container = new VisualContainer
             {
                 Position = new Vector2(0, 100),
-                Identifier = "container-projects"
+                Identifier = "container-projects",
+                IsVisible = false
             };
 
             var dataContainer = new StackContainer
@@ -664,14 +653,19 @@ namespace Bizio.App
 
         // My Company
 
-        private void ToggleMyCompany(object sender, EventArgs e) => ToggleContainer("container-my-company");
+        private void ToggleMyCompany(object sender, EventArgs e)
+        {
+             var container = _uiService.FindChild<IRenderable>("container-my-company");
+            container.IsVisible = !container.IsVisible;
+        }
 
         private IRenderable CreateMyCompanyContainer()
         {
             var myCompanyContainer = new VisualContainer
             {
                 Identifier = "container-my-company",
-                Position = new Vector2(0, 100)
+                Position = new Vector2(0, 100),
+                IsVisible = false
             };
 
             var buttonsContainer = new StackContainer
@@ -691,13 +685,21 @@ namespace Bizio.App
             var messagesButton = _uiService.CreateButton("Messages", ToggleCompanyMessages);
             buttonsContainer.AddChild(messagesButton);
 
+            var detailsContainer = new ExclusiveVisualContainer
+            {
+                Position = new Vector2(400, 0),
+                Identifier = "my-company-details"
+            };
+
+            myCompanyContainer.AddChild(detailsContainer);
+
             var employeesContainer = CreateMyCompanyEmployeesContainer();
-            myCompanyContainer.AddChild(employeesContainer);
+            detailsContainer.AddChild(employeesContainer);
             employeesContainer.AddChild(CreateCompanyEmployeeDetailsContainer());
 
-            myCompanyContainer.AddChild(CreateMyCompanyProjectsContainer());
+            detailsContainer.AddChild(CreateMyCompanyProjectsContainer());
 
-            myCompanyContainer.AddChild(CreateMyCompanyMessagesContainer());
+            detailsContainer.AddChild(CreateMyCompanyMessagesContainer());
 
             return myCompanyContainer;
         }
@@ -706,7 +708,6 @@ namespace Bizio.App
         {
             var container = new VisualContainer
             {
-                Position = new Vector2(400, 0),
                 Identifier = "container-my-company-projects"
             };
 
@@ -731,7 +732,6 @@ namespace Bizio.App
         {
             var container = new VisualContainer
             {
-                Position = new Vector2(400, 0),
                 Identifier = "container-my-company-employees"
             };
             
@@ -756,7 +756,6 @@ namespace Bizio.App
         {
             var container = new VisualContainer
             {
-                Position = new Vector2(400, 0),
                 Identifier = "container-my-company-messages"
             };
 
@@ -833,11 +832,23 @@ namespace Bizio.App
             return container;
         }
 
-        private void ToggleCompanyProjects(object sender, EventArgs e) => ToggleContainer("container-my-company-projects", "container-my-company");
+        private void ToggleCompanyProjects(object sender, EventArgs e)
+        {
+            var container = _uiService.FindChild<IRenderable>("container-my-company-projects");
+            container.IsVisible = !container.IsVisible;
+        }
 
-        private void ToggleCompanyEmployees(object sender, EventArgs e) => ToggleContainer("container-my-company-employees", "container-my-company");
+        private void ToggleCompanyEmployees(object sender, EventArgs e)
+        {
+            var container = _uiService.FindChild<IRenderable>("container-my-company-employees");
+            container.IsVisible = !container.IsVisible;
+        }
 
-        private void ToggleCompanyMessages(object sender, EventArgs e) => ToggleContainer("container-my-company-messages", "container-my-company");
+        private void ToggleCompanyMessages(object sender, EventArgs e)
+        {
+            var container = _uiService.FindChild<IRenderable>("container-my-company-messages");
+            container.IsVisible = !container.IsVisible;
+        }
 
         private void ToggleCompanyProject(object sender, DataEventArgs<Project> args)
         {

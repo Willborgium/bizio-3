@@ -72,9 +72,15 @@ namespace Bizio.App.UI
 
             _children.Add(child);
 
+            OnChildAdded(child);
+
             Measure();
 
             ChildrenChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        protected virtual void OnChildAdded(IIdentifiable child)
+        {
         }
 
         private void OnNestedChildrenChanged(object sender, EventArgs e)
@@ -101,6 +107,8 @@ namespace Bizio.App.UI
 
             _children.Remove(child);
 
+            OnChildRemoved(child);
+
             if (child is IUpdateable u)
             {
                 _updateables.Remove(u);
@@ -124,6 +132,10 @@ namespace Bizio.App.UI
             Measure();
 
             ChildrenChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        protected virtual void OnChildRemoved(IIdentifiable child)
+        {
         }
 
         public void RemoveChild(string identifier)

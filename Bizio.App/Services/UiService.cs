@@ -1,6 +1,7 @@
 ﻿using Bizio.App.UI;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -110,6 +111,31 @@ namespace Bizio.App.Services
         public Button CreateButton(string text, EventHandler handler, EventArgs args = null)
         {
             return CreateButton(text, 0, 0, 300, 50, handler, args);
+        }
+
+        public TChild HideSiblings<TChild>(string identifier)
+            where TChild : class, ITranslatable
+        {
+            var child = FindChild<TChild>(identifier);
+            if (child.Parent == null)
+            {
+                return child;
+            }
+
+            foreach (var sibling in child.Parent)
+            {
+                if (sibling == child)
+                {
+                    continue;
+                }
+
+                if (sibling is IRenderable r)
+                {
+                    r.IsVisible = false;
+                }
+            }
+
+            return child;
         }
 
         private readonly IResourceService _resourceService;

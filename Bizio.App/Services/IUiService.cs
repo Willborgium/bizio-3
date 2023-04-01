@@ -1,5 +1,6 @@
 ﻿using Bizio.App.UI;
 using System;
+using System.Collections.Generic;
 
 namespace Bizio.App.Services
 {
@@ -10,5 +11,7 @@ namespace Bizio.App.Services
         Button CreateButton<T>(string text, EventHandler<T> handler, T args = null)
             where T : EventArgs;
         Button CreateButton(string text, EventHandler handler, EventArgs args = null);
+        TChild HideSiblings<TChild>(string identifier)
+            where TChild : class, ITranslatable;
     }
 }
