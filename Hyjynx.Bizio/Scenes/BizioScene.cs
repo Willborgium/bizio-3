@@ -1,5 +1,4 @@
-﻿using Hyjynx.Core.Debugging;
-using Hyjynx.Core.Rendering.Interface;
+﻿using Hyjynx.Core.Rendering.Interface;
 using Hyjynx.Core.Rendering;
 using Hyjynx.Core.Services;
 using System.Drawing;
@@ -8,17 +7,17 @@ using Hyjynx.Bizio.Game;
 using Hyjynx.Core;
 using System.Collections.Specialized;
 using System.Numerics;
+using Hyjynx.Core.Debugging;
 
 namespace Hyjynx.Bizio.Scenes
 {
-    public class BizioScene : Scene, IFirstScene
+    public class BizioScene : Scene
     {
         private readonly IDataService _dataService;
         private readonly IInputService _inputService;
         private readonly IUtilityService _utilityService;
-
-        private const int ScreenWidth = 1920;
-        private const int ScreenHeight = 1080;
+        private readonly ISceneService _sceneService;
+        private readonly InitializationArguments _initializationArguments;
 
         public BizioScene(
             IResourceService resourceService,
@@ -26,73 +25,29 @@ namespace Hyjynx.Bizio.Scenes
             ILoggingService loggingService,
             IDataService dataService,
             IInputService inputService,
-            IUtilityService utilityService)
+            IUtilityService utilityService,
+            ISceneService sceneService,
+            InitializationArguments initializationArguments)
             : base(resourceService, contentService, loggingService)
         {
             _dataService = dataService;
             _inputService = inputService;
             _utilityService = utilityService;
+            _sceneService = sceneService;
+            _initializationArguments = initializationArguments;
         }
 
         public override void LoadContent()
         {
-            var font = _contentService.Load<IFont>("font-default");
-            _resourceService.Set("font-default", font);
-            DebuggingService.Font = font;
-
-            var pixel = _contentService.Load<ITexture2D>("pixel");
-            _resourceService.Set("texture-pixel", pixel);
-            DebuggingService.PixelTexture = pixel;
-
-            _loggingService.Initialize(font, pixel);
-
-            var buttonSpritesheet = _contentService.Load<ITexture2D>("greySheet");
-            var buttonMetadata = new ButtonMetadata
+            if (_initializationArguments.IsDebugModeEnabled)
             {
-                Font = font,
-                Spritesheet = buttonSpritesheet,
-                DefaultSource = new Rectangle(0, 143, 190, 45),
-                HoveredSource = new Rectangle(0, 98, 190, 45),
-                ClickedSource = new Rectangle(0, 188, 190, 49),
-                DisabledSource = new Rectangle(0, 0, 195, 49)
-            };
-
-            _resourceService.Set("button-spritesheet-default", buttonSpritesheet);
-            _resourceService.Set("button-metadata-default", buttonMetadata);
-            var uiContainer = new UiService(_resourceService, _loggingService, _inputService);
-            _visualRoot = uiContainer;
+                _visualRoot.AddChild(CreateDebugContainer());
+            }
 
             _visualRoot.AddChild(CreateMenuContainer());
-            var debugContainer = new DebugContainer(_loggingService, uiContainer);
-            debugContainer.Initialize(ScreenWidth, ScreenHeight);
-            _visualRoot.AddChild(debugContainer);
+            _visualRoot.AddChild(CreateGameContainer());
 
-            var gameContainer = new VisualContainer
-            {
-                IsVisible = false,
-                Identifier = "container-game"
-            };
-            _visualRoot.AddChild(gameContainer);
-
-            gameContainer.Bind(() => _dataService?.CurrentGame != null, (gc, x) => gc.IsVisible = x);
-
-            gameContainer.AddChild(CreateHeadlineContainer());
-
-            var gameUiContainer = new ExclusiveVisualContainer
-            {
-                Identifier = "container-game-ui"
-            };
-            gameContainer.AddChild(gameUiContainer);
-
-            gameUiContainer.AddChild(CreatePeopleContainer());
-            gameUiContainer.AddChild(CreateProjectsContainer());
-            gameUiContainer.AddChild(CreateMyCompanyContainer());
-
-            _dataService.Initialize();
-
-            _loggingService.Info($"Skill count: {_dataService.StaticData.Skills.Count}");
-
-            _loggingService.Info("Initialization complete");
+            _loggingService.Info("BizioScene.LoadContent complete");
         }
 
         private IContainer CreateMenuContainer()
@@ -104,13 +59,13 @@ namespace Hyjynx.Bizio.Scenes
                 Identifier = "container-menu"
             };
 
-            container.AddChild(_utilityService.CreateButton("New Game", 0, 0, 200, 50, StartNewGame));
+            container.AddChild(_utilityService.CreateButton("Quit", 0, 0, 200, 50, QuitGame));
             container.AddChild(_utilityService.CreateButton("My Company", 0, 0, 200, 50, ToggleMyCompany));
             container.AddChild(_utilityService.CreateButton("People", 0, 0, 200, 50, TogglePeopleList));
             container.AddChild(_utilityService.CreateButton("Projects", 0, 0, 200, 50, ToggleProjectsList));
 
-            var x = ScreenWidth - container.Dimensions.X;
-            var y = (ScreenHeight - container.Dimensions.Y) / 2;
+            var x = _initializationArguments.ScreenWidth - container.Dimensions.X;
+            var y = (_initializationArguments.ScreenHeight - container.Dimensions.Y) / 2;
 
             container.Position = new Vector2(x, y);
 
@@ -177,36 +132,48 @@ namespace Hyjynx.Bizio.Scenes
             return container;
         }
 
+        private IContainer CreateDebugContainer()
+        {
+            var debugContainer = new DebugContainer(_loggingService, _utilityService, _visualRoot);
+            debugContainer.Initialize(_initializationArguments.ScreenWidth, _initializationArguments.ScreenHeight);
+            return debugContainer;
+        }
+
+        private IContainer CreateGameContainer()
+        {
+            var gameContainer = new VisualContainer
+            {
+                IsVisible = false,
+                Identifier = "container-game"
+            };
+
+            gameContainer.Bind(() => _dataService?.CurrentGame != null, (gc, x) => gc.IsVisible = x);
+
+            gameContainer.AddChild(CreateHeadlineContainer());
+            gameContainer.AddChild(CreateGameUIContainer());
+
+            return gameContainer;
+        }
+
+        private IContainer CreateGameUIContainer()
+        {
+            var gameUiContainer = new ExclusiveVisualContainer
+            {
+                Identifier = "container-game-ui"
+            };
+
+            gameUiContainer.AddChild(CreatePeopleContainer());
+            gameUiContainer.AddChild(CreateProjectsContainer());
+            gameUiContainer.AddChild(CreateMyCompanyContainer());
+
+            return gameUiContainer;
+        }
+
         // Game state management
 
-        private void StartNewGame(object sender, EventArgs e)
+        private void QuitGame(object sender, EventArgs e)
         {
-            _dataService.InitializeNewGame(
-                c =>
-                {
-                    c.Allocations.CollectionChanged += OnCompanyAllocationsChanged;
-                }
-            );
-
-            _loggingService.Info($"Game ID: {_dataService.CurrentGame.GameId}");
-            _loggingService.Info($"Person count: {_dataService.CurrentGame.People.Count}");
-            _loggingService.Info($"Company count: {_dataService.CurrentGame.Companies.Count}");
-            _loggingService.Info($"Project count: {_dataService.CurrentGame.Projects.Count}");
-
-            // Maybe make Companies observable?
-            foreach (var company in _dataService.CurrentGame.Companies)
-            {
-                var founder = company.Founder.Person;
-                _loggingService.Info($"Company {company.Id}: {company.Name} founded by {founder.FirstName} {founder.LastName}");
-            }
-
-            _dataService.SendMessage(
-                "HR",
-                "Congrats on getting funded!",
-                "Now that you've got some cash, why not hire an employee and try to complete a project?"
-            );
-
-            (sender as Button).IsEnabled = false;
+            _sceneService.PopScene();
         }
 
         private void NextTurn(object sender, EventArgs e)

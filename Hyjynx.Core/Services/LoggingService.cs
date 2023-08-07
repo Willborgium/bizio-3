@@ -24,19 +24,22 @@ namespace Hyjynx.Core.Services
             _backgroundDestination = new Rectangle(0, 0, 500, 2000);
         }
 
-        public void Info(string message)
+        public ILoggingService Info(string message)
         {
             _messages.Add(new(message, Color.Black));
+            return this;
         }
 
-        public void Warning(string message)
+        public ILoggingService Warning(string message)
         {
             _messages.Add(new(message, Color.Orange));
+            return this;
         }
 
-        public void Error(string message)
+        public ILoggingService Error(string message)
         {
             _messages.Add(new(message, Color.Maroon));
+            return this;
         }
 
         public void Render(IRenderer renderer)

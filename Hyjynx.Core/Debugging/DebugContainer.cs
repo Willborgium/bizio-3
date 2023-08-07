@@ -1,22 +1,21 @@
-﻿using Hyjynx.Bizio.Services;
-using Hyjynx.Core;
-using Hyjynx.Core.Debugging;
-using Hyjynx.Core.Rendering;
+﻿using Hyjynx.Core.Rendering;
 using Hyjynx.Core.Rendering.Interface;
 using Hyjynx.Core.Services;
-using System;
 using System.Numerics;
 
-namespace Hyjynx.Bizio
+namespace Hyjynx.Core.Debugging
 {
     public class DebugContainer : VisualContainer
     {
         public DebugContainer(
             ILoggingService loggingService,
-            IUiService uiService)
+            IUtilityService utilityService,
+            IContainer visualRoot)
         {
             _loggingService = loggingService;
-            _uiService = uiService;
+            _utilityService = utilityService;
+            _visualRoot = visualRoot;
+            ZIndex = int.MaxValue;
         }
 
         public void Initialize(float screenWidth, float screenHeight)
@@ -29,10 +28,10 @@ namespace Hyjynx.Bizio
 
             AddChild(root);
 
-            root.AddChild(_uiService.CreateButton("Logger", ToggleDebugInfo));
-            root.AddChild(_uiService.CreateButton("Snapshot", LogSnapshot));
-            root.AddChild(_uiService.CreateButton("Outlines", ToggleDebuggingOutlines));
-            root.AddChild(_uiService.CreateButton("Visuals", LogVisuals));
+            root.AddChild(_utilityService.CreateButton("Logger", ToggleDebugInfo));
+            root.AddChild(_utilityService.CreateButton("Snapshot", LogSnapshot));
+            root.AddChild(_utilityService.CreateButton("Outlines", ToggleDebuggingOutlines));
+            root.AddChild(_utilityService.CreateButton("Visuals", LogVisuals));
 
             var x = screenWidth - root.Dimensions.X;
             var y = screenHeight - root.Dimensions.Y;
@@ -42,7 +41,7 @@ namespace Hyjynx.Bizio
 
         private void LogVisuals(object sender, EventArgs e)
         {
-            DebuggingService.Describe(_uiService, _loggingService);
+            DebuggingService.Describe(_visualRoot, _loggingService);
         }
 
         private void ToggleDebugInfo(object sender, EventArgs e)
@@ -53,8 +52,8 @@ namespace Hyjynx.Bizio
 
         private void LogSnapshot(object sender, EventArgs e)
         {
-            var renderableCount = _uiService.GetChildCount<IRenderable>(true);
-            var updateableCount = _uiService.GetChildCount<IUpdateable>(true);
+            var renderableCount = _visualRoot.GetChildCount<IRenderable>(true);
+            var updateableCount = _visualRoot.GetChildCount<IUpdateable>(true);
 
             _loggingService.Info("[BEGIN SNAPSHOT]");
             _loggingService.Info($"Renderables: {renderableCount}");
@@ -69,6 +68,7 @@ namespace Hyjynx.Bizio
         }
 
         private readonly ILoggingService _loggingService;
-        private readonly IUiService _uiService;
+        private readonly IUtilityService _utilityService;
+        private readonly IContainer _visualRoot;
     }
 }

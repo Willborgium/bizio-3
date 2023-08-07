@@ -3,8 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Hyjynx.Core
 {
-    public record InitializationArguments(int ScreenWidth, int ScreenHeight);
-
     public static class Package
     {
         public static IServiceCollection AddCoreServices(this IServiceCollection services) =>

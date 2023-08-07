@@ -1,4 +1,5 @@
 ﻿using Hyjynx.Core.Rendering;
+using Hyjynx.Core.Rendering.Interface;
 
 namespace Hyjynx.Core.Services
 {
@@ -12,6 +13,8 @@ namespace Hyjynx.Core.Services
             _resourceService = resourceService;
             _contentService = contentService;
             _loggingService = loggingService;
+
+            _visualRoot = new VisualContainer();
         }
 
         public virtual void Update()

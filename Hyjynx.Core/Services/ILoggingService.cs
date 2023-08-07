@@ -4,9 +4,9 @@ namespace Hyjynx.Core.Services
 {
     public interface ILoggingService : IRenderable
     {
-        void Error(string message);
-        void Info(string message);
+        ILoggingService Error(string message);
+        ILoggingService Info(string message);
         void Initialize(IFont font, ITexture2D pixel);
-        void Warning(string message);
+        ILoggingService Warning(string message);
     }
 }
