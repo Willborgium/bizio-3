@@ -1,25 +1,10 @@
-﻿using Bizio.App.Services;
+﻿using Hyjynx.App.Xna;
+using Hyjynx.Bizio;
+using Hyjynx.Core;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Bizio.App
-{
-    public static class Program
-    {
-        public static void Main(string[] args)
-        {
-            var services = new ServiceCollection()
-                .AddSingleton<IResourceService, ResourceService>()
-                .AddSingleton<IDataService, DataService>()
-                .AddSingleton<ILoggingService, LoggingService>()
-                .AddSingleton<IUiService, UiService>()
-                .AddTransient<IRunnable, BizioGame>();
-
-            using (var provider = services.BuildServiceProvider())
-            {
-                provider
-                    .GetRequiredService<IRunnable>()
-                    .Run();
-            }
-        }
-    }
-}
+new ServiceCollection()
+    .AddCoreServices()
+    .AddDriverServices()
+    .AddBizioServices()
+    .RunDriver();
