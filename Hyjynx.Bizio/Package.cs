@@ -13,6 +13,6 @@ namespace Hyjynx.Bizio
                 .AddFirstScene<InitializationScene>()
                 .AddScene<MainMenuScene>()
                 .AddScene<BizioScene>()
-                .AddSingleton(new InitializationArguments(1920, 1080, false));
+                .AddSingleton(new InitializationArguments(1920, 1080, true));
     }
 }

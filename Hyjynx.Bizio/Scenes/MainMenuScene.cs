@@ -2,6 +2,8 @@
 using Hyjynx.Core.Services;
 using Hyjynx.Bizio.Services;
 using System.Numerics;
+using Hyjynx.Core.Debugging;
+using Hyjynx.Core;
 
 namespace Hyjynx.Bizio.Scenes
 {
@@ -10,8 +12,9 @@ namespace Hyjynx.Bizio.Scenes
         private readonly IDataService _dataService;
         private readonly IUtilityService _utilityService;
         private readonly ISceneService _sceneService;
+        private readonly IInputService _inputService;
         private readonly Func<BizioScene> _bizioSceneFactory;
-
+        private readonly InitializationArguments _initializationArguments;
         private const int ScreenWidth = 1920;
         private const int ScreenHeight = 1080;
 
@@ -22,18 +25,34 @@ namespace Hyjynx.Bizio.Scenes
             IDataService dataService,
             IUtilityService utilityService,
             ISceneService sceneService,
-            Func<BizioScene> bizioSceneFactory
+            IInputService inputService,
+            Func<BizioScene> bizioSceneFactory,
+            InitializationArguments initializationArguments
             )
             : base(resourceService, contentService, loggingService)
         {
             _dataService = dataService;
             _utilityService = utilityService;
             _sceneService = sceneService;
+            _inputService = inputService;
             _bizioSceneFactory = bizioSceneFactory;
+            _initializationArguments = initializationArguments;
         }
 
         public override void LoadContent()
         {
+            DebuggingService.IsDebuggingEnabled = _initializationArguments.IsDebugModeEnabled;
+
+            if (_initializationArguments.IsDebugModeEnabled)
+            {
+                _visualRoot.AddChild(DebuggingService.CreateDebugContainer(_loggingService, _utilityService, _visualRoot, _initializationArguments));
+            }
+
+            var menuScrollContainer = new ScrollContainer(_inputService)
+            {
+                Dimensions = new Vector2(175, 222)
+            };
+
             var menu = new StackContainer
             {
                 Padding = Vector4.One * 10,
@@ -41,15 +60,22 @@ namespace Hyjynx.Bizio.Scenes
                 Identifier = "container-menu"
             };
 
+            menuScrollContainer.AddChild(menu);
+
             menu.AddChild(_utilityService.CreateButton("New Game", 0, 0, 200, 50, StartNewGame));
             menu.AddChild(_utilityService.CreateButton("Quit", 0, 0, 200, 50, QuitGame));
+            menu.AddChild(_utilityService.CreateButton("Quit 2", 0, 0, 200, 50, QuitGame));
+            menu.AddChild(_utilityService.CreateButton("Quit 3", 0, 0, 200, 50, QuitGame));
+            menu.AddChild(_utilityService.CreateButton("Quit 4", 0, 0, 200, 50, QuitGame));
+            menu.AddChild(_utilityService.CreateButton("Quit 5", 0, 0, 200, 50, QuitGame));
+            menu.AddChild(_utilityService.CreateButton("Quit 6", 0, 0, 200, 50, QuitGame));
 
-            var x = (ScreenWidth - menu.Dimensions.X) / 2;
-            var y = (ScreenHeight - menu.Dimensions.Y) / 2;
+            var x = (ScreenWidth - menuScrollContainer.Dimensions.X) / 2;
+            var y = (ScreenHeight - menuScrollContainer.Dimensions.Y) / 2;
 
-            menu.Position = new Vector2(x, y);
+            menuScrollContainer.Position = new Vector2(x, y);
 
-            _visualRoot.AddChild(menu);
+            _visualRoot.AddChild(menuScrollContainer);
         }
 
         private void QuitGame(object sender, EventArgs e) => _sceneService.PopScene();

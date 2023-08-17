@@ -1,9 +1,5 @@
 ﻿using Hyjynx.Core.Debugging;
-using Hyjynx.Core.Rendering;
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 
 namespace Hyjynx.Core.Rendering.Interface
@@ -249,7 +245,7 @@ namespace Hyjynx.Core.Rendering.Interface
 
         protected override Vector2 GetDimensions() => _dimensions;
 
-        private void Measure()
+        protected virtual void Measure()
         {
             var currentPosition = GetCurrentPosition();
             float minX = currentPosition.X;

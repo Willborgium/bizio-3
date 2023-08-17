@@ -13,7 +13,6 @@ namespace Hyjynx.Bizio.Scenes
         private readonly IDataService _dataService;
         private readonly ISceneService _sceneService;
         private readonly Func<MainMenuScene> _mainMenuSceneFactory;
-        private readonly InitializationArguments _initializationArguments;
 
         public InitializationScene(
             IResourceService resourceService,
@@ -21,21 +20,17 @@ namespace Hyjynx.Bizio.Scenes
             ILoggingService loggingService,
             IDataService dataService,
             ISceneService sceneService,
-            Func<MainMenuScene> mainMenuSceneFactory,
-            InitializationArguments initializationArguments
+            Func<MainMenuScene> mainMenuSceneFactory
             )
             : base(resourceService, contentService, loggingService)
         {
             _dataService = dataService;
             _sceneService = sceneService;
             _mainMenuSceneFactory = mainMenuSceneFactory;
-            _initializationArguments = initializationArguments;
         }
 
         public override void LoadContent()
         {
-            DebuggingService.IsDebuggingEnabled = _initializationArguments.IsDebugModeEnabled;
-
             var font = _contentService.Load<IFont>("font-default");
             _resourceService.Set("font-default", font);
             DebuggingService.Font = font;

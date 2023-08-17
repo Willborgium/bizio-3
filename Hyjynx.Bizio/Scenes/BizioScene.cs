@@ -41,7 +41,7 @@ namespace Hyjynx.Bizio.Scenes
         {
             if (_initializationArguments.IsDebugModeEnabled)
             {
-                _visualRoot.AddChild(CreateDebugContainer());
+                _visualRoot.AddChild(DebuggingService.CreateDebugContainer(_loggingService, _utilityService, _visualRoot, _initializationArguments));
             }
 
             _visualRoot.AddChild(CreateMenuContainer());
@@ -130,13 +130,6 @@ namespace Hyjynx.Bizio.Scenes
             container.AddChild(nextTurnButton);
 
             return container;
-        }
-
-        private IContainer CreateDebugContainer()
-        {
-            var debugContainer = new DebugContainer(_loggingService, _utilityService, _visualRoot);
-            debugContainer.Initialize(_initializationArguments.ScreenWidth, _initializationArguments.ScreenHeight);
-            return debugContainer;
         }
 
         private IContainer CreateGameContainer()

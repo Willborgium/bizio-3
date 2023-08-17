@@ -114,16 +114,6 @@ namespace Hyjynx.Core.Rendering.Interface
             return true;
         }
 
-        private Rectangle Destination
-        {
-            get
-            {
-                var position = Parent?.GetChildAbsolutePosition(this) ?? Position;
-
-                return new Rectangle((int)position.X, (int)position.Y, (int)Dimensions.X, (int)Dimensions.Y);
-            }
-        }
-
         private ButtonState _state;
         private Vector2 _dimensions;
         private readonly ButtonMetadata _metadata;

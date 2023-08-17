@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Drawing;
+using System.Numerics;
 
 namespace Hyjynx.Core.Rendering
 {
@@ -10,7 +11,7 @@ namespace Hyjynx.Core.Rendering
         public Vector2 Position { get; set; }
         public string? Identifier { get; set; }
         public ICollection<IUpdateable> Bindings { get; }
-        public Vector2 Dimensions => GetDimensions();
+        public virtual Vector2 Dimensions { get => GetDimensions(); set => throw new InvalidOperationException("Dimensions are measured for this component and cannot be set directly."); }
 
         protected UiComponent()
         {
@@ -46,6 +47,16 @@ namespace Hyjynx.Core.Rendering
             }
 
             return (T)_data[key];
+        }
+
+        protected Rectangle Destination
+        {
+            get
+            {
+                var position = Parent?.GetChildAbsolutePosition(this) ?? Position;
+
+                return new Rectangle((int)position.X, (int)position.Y, (int)Dimensions.X, (int)Dimensions.Y);
+            }
         }
 
         protected abstract void RenderInternal(IRenderer renderer);

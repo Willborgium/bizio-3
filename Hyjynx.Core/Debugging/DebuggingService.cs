@@ -92,6 +92,13 @@ namespace Hyjynx.Core.Debugging
             loggingService.Info($"Saved visual tree to file {filename}");
         }
 
+        public static IContainer CreateDebugContainer(ILoggingService loggingService, IUtilityService utilityService, IContainer visualRoot, InitializationArguments initializationArguments)
+        {
+            var debugContainer = new DebugContainer(loggingService, utilityService, visualRoot);
+            debugContainer.Initialize(initializationArguments.ScreenWidth, initializationArguments.ScreenHeight);
+            return debugContainer;
+        }
+
         private static void Describe(StringBuilder description, int depth, IIdentifiable node)
         {
             var indentation = new string(Enumerable.Repeat('\t', depth).ToArray());
