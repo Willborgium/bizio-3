@@ -73,7 +73,7 @@ namespace Hyjynx.Bizio.Scenes
             var x = (ScreenWidth - menuScrollContainer.Dimensions.X) / 2;
             var y = (ScreenHeight - menuScrollContainer.Dimensions.Y) / 2;
 
-            menuScrollContainer.Position = new Vector2(x, y);
+            menuScrollContainer.Position = new Vector2(25, 25);
 
             _visualRoot.AddChild(menuScrollContainer);
         }

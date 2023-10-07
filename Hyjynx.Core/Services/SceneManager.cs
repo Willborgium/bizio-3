@@ -1,4 +1,5 @@
 ﻿using Hyjynx.Core.Rendering;
+using System.Drawing;
 
 namespace Hyjynx.Core.Services
 {

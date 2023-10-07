@@ -13,6 +13,9 @@ namespace Hyjynx.Core.Rendering
         void Draw(ITexture2D texture, Rectangle destination, Rectangle source, Color color);
         void DrawText(IFont font, string text, Vector2 position, Color color);
 
+        void Begin();
+        void End();
+
         void Begin2D();
         void End2D();
     }

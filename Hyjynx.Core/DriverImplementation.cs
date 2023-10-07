@@ -43,7 +43,11 @@ namespace Hyjynx.Core
 
         public void Draw()
         {
-            _renderer.Clear(Color.CornflowerBlue);
+            _renderer.Begin();
+
+            _renderer.Clear(Color.Coral);
+
+            _sceneService.Render();
 
             _renderer.Begin2D();
 
@@ -51,7 +55,7 @@ namespace Hyjynx.Core
 
             _renderer.End2D();
 
-            _sceneService.Render();
+            _renderer.End();
         }
 
         private readonly IWindowManagementService _windowManagementService;
