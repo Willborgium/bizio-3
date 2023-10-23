@@ -1,10 +1,15 @@
 ﻿using Hyjynx.Core.Rendering;
 using Hyjynx.Core.Rendering.Interface;
+using System.Diagnostics;
 
 namespace Hyjynx.Core.Services
 {
     public abstract class Scene : IScene
     {
+        public bool IsVisible { get; set; }
+        public int ZIndex { get; set; }
+        public string? Identifier { get; set; }
+
         public Scene(
             IResourceService resourceService,
             IContentService contentService,
@@ -14,6 +19,9 @@ namespace Hyjynx.Core.Services
             _contentService = contentService;
             _loggingService = loggingService;
 
+            IsVisible = true;
+            ZIndex = 0;
+
             _visualRoot = new VisualContainer();
         }
 
@@ -22,13 +30,18 @@ namespace Hyjynx.Core.Services
             _visualRoot?.Update();
         }
 
+        public void Rasterize(IRenderer renderer)
+        {
+            //Debug.WriteLine(">>>>> Rasterize start");
+            _visualRoot?.Rasterize(renderer);
+            //Debug.WriteLine(">>>>> Rasterize end");
+        }
+
         public void Render(IRenderer renderer)
         {
-            renderer.Begin2D();
-
+            //Debug.WriteLine(">>>>> Render start");
             _visualRoot?.Render(renderer);
-
-            renderer.End2D();
+            //Debug.WriteLine(">>>>> Render end");
         }
 
         public virtual void LoadContent()

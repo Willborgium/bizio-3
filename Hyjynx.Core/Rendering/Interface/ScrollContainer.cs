@@ -63,11 +63,6 @@ namespace Hyjynx.Core.Rendering.Interface
             _lastWheelValue = wheelValue;
         }
 
-        public override Vector2 GetChildAbsolutePosition(ITranslatable child)
-        {
-            return GetCurrentPosition() + child.Position + _offset;
-        }
-
         protected Vector2 _offset = Vector2.Zero;
 
         private Vector2 _dimensions;

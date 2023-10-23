@@ -1,5 +1,7 @@
 ﻿using Hyjynx.Core.Debugging;
 using System.Collections;
+using System.Diagnostics;
+using System.Drawing;
 using System.Numerics;
 
 namespace Hyjynx.Core.Rendering.Interface
@@ -9,8 +11,8 @@ namespace Hyjynx.Core.Rendering.Interface
         public event EventHandler? ChildrenChanged;
 
         public ContainerBase()
+            : base()
         {
-            IsVisible = true;
         }
 
         public void AddChild(IIdentifiable child)
@@ -69,6 +71,8 @@ namespace Hyjynx.Core.Rendering.Interface
             _children.Add(child);
 
             OnChildAdded(child);
+
+            Arrange();
 
             Measure();
 
@@ -221,14 +225,30 @@ namespace Hyjynx.Core.Rendering.Interface
             }
         }
 
-        public abstract Vector2 GetChildAbsolutePosition(ITranslatable child);
-
-        protected override void RenderInternal(IRenderer renderer)
+        protected override void RasterizeInternal(IRenderer renderer)
         {
+            foreach (var renderable in _renderables.OrderBy(r => r.ZIndex))
+            {
+                renderable.Rasterize(renderer);
+            }
+
+            _renderTarget ??= renderer.CreateRenderTarget2D((int)_dimensions.X, (int)_dimensions.Y);
+
+            renderer.PushRenderTarget(_renderTarget);
+
+            renderer.Clear(Color.Transparent);
+
             foreach (var renderable in _renderables.OrderBy(r => r.ZIndex))
             {
                 renderable.Render(renderer);
             }
+
+            renderer.PopRenderTarget();
+        }
+
+        protected override void RenderInternal(IRenderer renderer)
+        {
+            renderer.Draw(_renderTarget, Destination, Color.White);
 
             if (!_renderables.Any())
             {
@@ -240,10 +260,12 @@ namespace Hyjynx.Core.Rendering.Interface
 
         protected Vector2 GetCurrentPosition()
         {
-            return Parent?.GetChildAbsolutePosition(this) ?? Position;
+            return Position;
         }
 
         protected override Vector2 GetDimensions() => _dimensions;
+
+        protected virtual void Arrange() { }
 
         protected virtual void Measure()
         {
@@ -259,7 +281,7 @@ namespace Hyjynx.Core.Rendering.Interface
 
                 if (child is ITranslatable t)
                 {
-                    position = GetChildAbsolutePosition(t);
+                    position = t.Position;
                 }
 
                 if (minX > position.X)
@@ -289,7 +311,16 @@ namespace Hyjynx.Core.Rendering.Interface
                 }
             }
 
-            _dimensions = new Vector2(maxX - minX, maxY - minY);
+            var newDimensions = new Vector2(maxX - minX, maxY - minY);
+
+            if (newDimensions != _dimensions)
+            {
+                Debug.WriteLine("Container has new measurements");
+                _renderTarget?.Dispose();
+                _renderTarget = null;
+            }
+
+            _dimensions = newDimensions;
         }
 
         public IEnumerator<IIdentifiable> GetEnumerator()
@@ -307,5 +338,7 @@ namespace Hyjynx.Core.Rendering.Interface
         protected readonly ICollection<IIdentifiable> _children = new HashSet<IIdentifiable>();
         protected readonly ICollection<IRenderable> _renderables = new HashSet<IRenderable>();
         protected readonly ICollection<IUpdateable> _updateables = new HashSet<IUpdateable>();
+
+        private IRenderTarget? _renderTarget;
     }
 }

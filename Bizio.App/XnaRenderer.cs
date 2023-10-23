@@ -1,35 +1,16 @@
 ﻿using Hyjynx.Core.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Numerics;
 
 namespace Hyjynx.App.Xna
 {
-    public interface IRenderTarget
-    {
-
-    }
-
-    public class DynamicRenderTarget : IRenderTarget
-    {
-        public DynamicRenderTarget(dynamic resource)
-        {
-            _resource = resource;
-        }
-
-        public TResource As<TResource>() => (TResource)_resource;
-
-        protected readonly dynamic _resource;
-    }
-
     public class XnaRenderer : IRenderer
     {
-        private readonly IGraphicsDeviceManager _graphicsDeviceManager;
-        private SpriteBatch _spriteBatch;
-
-        private IRenderTarget _rootRenderTarget;
-        private Microsoft.Xna.Framework.Rectangle _destination;
+        private const bool IS_DIAGNOSTIC_OUTPUT_ENABLED = false;
 
         public XnaRenderer(IGraphicsDeviceManager graphicsDeviceManager)
         {
@@ -44,18 +25,25 @@ namespace Hyjynx.App.Xna
             var width = _graphicsDeviceManager.GraphicsDevice.PresentationParameters.BackBufferWidth;
             var height = _graphicsDeviceManager.GraphicsDevice.PresentationParameters.BackBufferHeight;
 
-            _rootRenderTarget = CreateRenderTarget(width, height);
-            _destination = new Microsoft.Xna.Framework.Rectangle(0, 0, width, height);
+            var rt = CreateRenderTarget2D(width, height);
+
+            _rootRenderTarget = rt as XnaRenderTarget2D;
+            Diagnostic($"Root ID: {rt.Identifier}");
+            _destination = new Rectangle(0, 0, width, height);
         }
 
         public void Clear(Color color)
         {
-            var xColor = new Microsoft.Xna.Framework.Color(color.R, color.G, color.B, color.A);
+            Diagnostic($"Clear to {color}");
+
+            var xColor = new Microsoft.Xna.Framework.Color(color.R, color.G, color.B, (byte)0);
             _graphicsDeviceManager.GraphicsDevice.Clear(xColor);
         }
 
         public void Draw(ITexture2D texture, Rectangle destination, Color color)
         {
+            Diagnostic($"Draw texture at ({destination})");
+
             var xnaTexture = ToXna(texture);
             var xnaDestination = ToXna(destination);
             var xnaColor = ToXna(color);
@@ -65,6 +53,8 @@ namespace Hyjynx.App.Xna
 
         public void Draw(ITexture2D texture, Rectangle destination, Rectangle source, Color color)
         {
+            Diagnostic($"Draw sub-texture at ({destination})");
+
             var xnaTexture = ToXna(texture);
             var xnaDestination = ToXna(destination);
             var xnaSource = ToXna(source);
@@ -75,6 +65,8 @@ namespace Hyjynx.App.Xna
 
         public void DrawText(IFont font, string text, Vector2 position, Color color)
         {
+            Diagnostic($"Draw text '{text}' at ({position})");
+
             var xnaFont = ToXna(font);
             var xnaPosition = ToXna(position);
             var xnaColor = ToXna(color);
@@ -82,26 +74,58 @@ namespace Hyjynx.App.Xna
             _spriteBatch.DrawString(xnaFont, text, xnaPosition, xnaColor);
         }
 
-        public IRenderTarget CreateRenderTarget(int width, int height)
+        public void Draw(IRenderTarget renderTarget, Rectangle destination, Color color)
         {
-            var renderTarget = new RenderTarget2D(_graphicsDeviceManager.GraphicsDevice, width, height);
+            Diagnostic($"Draw render target {renderTarget.Identifier} ({renderTarget.Width}, {renderTarget.Height}) at ({destination})");
 
-            return new DynamicRenderTarget(renderTarget);
+            _spriteBatch.Draw(renderTarget as XnaRenderTarget2D, ToXna(destination), ToXna(color));
+        }
+
+        public IRenderTarget CreateRenderTarget2D(int width, int height)
+        {
+            var output = new XnaRenderTarget2D(_graphicsDeviceManager.GraphicsDevice, width, height);
+
+            Diagnostic($"Creating render target {output.Identifier} ({width},{height})");
+
+            return output;
         }
 
         public void PushRenderTarget(IRenderTarget renderTarget)
         {
-            var xnaRenderTarget = ToXna(renderTarget);
+            if (_renderTargets.TryPeek(out var lastRenderTarget))
+            {
+                EndSpriteBatch();
+            }
 
-            _graphicsDeviceManager.GraphicsDevice.SetRenderTarget(xnaRenderTarget);
+            Diagnostic($"Set render target to {renderTarget.Identifier}");
+
+            _graphicsDeviceManager.GraphicsDevice.SetRenderTarget(renderTarget as XnaRenderTarget2D);
+
+            _renderTargets.Push(renderTarget);
+
+            BeginSpriteBatch();
         }
 
-        public void PopRenderTarget()
+        private void BeginSpriteBatch()
         {
+            Diagnostic("Spritebatch begin");
 
+            _spriteBatch.Begin();
         }
 
-        private Stack<IRenderTarget> _renderTargets;
+        private void EndSpriteBatch()
+        {
+            Diagnostic("Spritebatch end");
+
+            _spriteBatch.End();
+        }
+
+        public IRenderTarget PopRenderTarget()
+        {
+            EndSpriteBatch();
+
+            return _renderTargets.Pop();
+        }
 
         public void Begin()
         {
@@ -110,31 +134,25 @@ namespace Hyjynx.App.Xna
 
         public void End()
         {
+            while (_renderTargets.Any())
+            {
+                PopRenderTarget();
+            }
+
+            Diagnostic("Set render target to null");
+
             _graphicsDeviceManager.GraphicsDevice.SetRenderTarget(null);
 
-            _spriteBatch.Begin();
-            _spriteBatch.Draw(ToXna(_rootRenderTarget), _destination, Microsoft.Xna.Framework.Color.White);
-            _spriteBatch.End();
-        }
+            BeginSpriteBatch();
 
-        public void Begin2D()
-        {
-            _spriteBatch.Begin();
-        }
+            Draw(_rootRenderTarget, _destination, Color.White);
 
-        public void End2D()
-        {
-            _spriteBatch.End();
+            EndSpriteBatch();
         }
 
         private static Texture2D ToXna(ITexture2D texture)
         {
             return ((DynamicTexture2D)texture).As<Texture2D>();
-        }
-
-        private static RenderTarget2D ToXna(IRenderTarget renderTarget)
-        {
-            return ((DynamicRenderTarget)renderTarget).As<RenderTarget2D>();
         }
 
         private static Microsoft.Xna.Framework.Rectangle ToXna(Rectangle rectangle)
@@ -149,12 +167,30 @@ namespace Hyjynx.App.Xna
 
         private static SpriteFont ToXna(IFont font)
         {
-            return ((DynamicFont)font).As<Microsoft.Xna.Framework.Graphics.SpriteFont>();
+            return ((DynamicFont)font).As<SpriteFont>();
         }
 
         private static Microsoft.Xna.Framework.Vector2 ToXna(Vector2 vector2)
         {
             return new Microsoft.Xna.Framework.Vector2(vector2.X, vector2.Y);
         }
+
+        private static void Diagnostic(string message)
+        {
+            if (!IS_DIAGNOSTIC_OUTPUT_ENABLED)
+            {
+                return;
+            }
+
+            Debug.WriteLine(message);
+        }
+
+        private readonly IGraphicsDeviceManager _graphicsDeviceManager;
+        private SpriteBatch _spriteBatch;
+
+        private XnaRenderTarget2D _rootRenderTarget;
+        private Rectangle _destination;
+
+        private readonly Stack<IRenderTarget> _renderTargets;
     }
 }

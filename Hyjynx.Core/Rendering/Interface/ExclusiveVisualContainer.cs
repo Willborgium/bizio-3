@@ -4,11 +4,6 @@ namespace Hyjynx.Core.Rendering.Interface
 {
     public class ExclusiveVisualContainer : ContainerBase
     {
-        public override Vector2 GetChildAbsolutePosition(ITranslatable child)
-        {
-            return GetCurrentPosition() + child.Position;
-        }
-
         protected override void OnChildAdded(IIdentifiable child)
         {
             if (child is IRenderable renderable)

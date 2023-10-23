@@ -2,10 +2,8 @@
 
 namespace Hyjynx.Core.Services
 {
-    public interface IScene
+    public interface IScene : IUpdateable, IRenderable
     {
-        void Update();
-        void Render(IRenderer renderer);
         void LoadContent();
         void RegisterEvents();
         void UnregisterEvents();

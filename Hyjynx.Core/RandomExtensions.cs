@@ -1,7 +1,14 @@
-﻿namespace Hyjynx.Core
+﻿using System.Drawing;
+
+namespace Hyjynx.Core
 {
     public static class RandomExtensions
     {
+        public static Color RandomColor()
+        {
+            return Color.FromArgb (255, _r.Next(0, 255), _r.Next(0, 255), _r.Next (0, 255));
+        }
+
         public static T Random<T>(this Random r)
             where T : struct, Enum
         {

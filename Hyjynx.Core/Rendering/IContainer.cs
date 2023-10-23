@@ -11,7 +11,6 @@ namespace Hyjynx.Core.Rendering
         int GetChildCount<T>(bool isRecursive);
         IIdentifiable FindChild(string identifier);
         T FindChild<T>(string identifier);
-        Vector2 GetChildAbsolutePosition(ITranslatable child);
         event EventHandler ChildrenChanged;
     }
 }

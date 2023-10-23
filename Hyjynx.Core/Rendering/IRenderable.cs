@@ -6,6 +6,7 @@
 
         int ZIndex { get; set; }
 
+        void Rasterize(IRenderer renderer);
         void Render(IRenderer renderer);
     }
 }

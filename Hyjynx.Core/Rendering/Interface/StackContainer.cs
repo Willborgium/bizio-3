@@ -8,43 +8,49 @@ namespace Hyjynx.Core.Rendering.Interface
 
         public Vector4 Padding { get; set; }
 
-        public override Vector2 GetChildAbsolutePosition(ITranslatable child)
+        protected override void Arrange()
         {
-            var position = GetCurrentPosition();
+            var padding = Direction switch
+            {
+                LayoutDirection.Horizontal => new Vector2(Padding.Z, 0),
+                LayoutDirection.Vertical => new Vector2(0, Padding.W),
+                _ => throw new InvalidOperationException("Unknown LayoutDirection"),
+            };
 
-            position += new Vector2(Padding.X, Padding.Y) + child.Position;
+            var position = Vector2.Zero;
 
             foreach (var renderable in _renderables)
             {
-                if (renderable == child)
-                {
-                    return position;
-                }
-
                 if (!renderable.IsVisible)
                 {
                     continue;
                 }
 
-                var measurable = renderable as IMeasurable;
+                if (renderable is not ITranslatable translatable)
+                {
+                    continue;
+                }
 
-                var offset = Vector2.Zero;
+                translatable.Position = position + padding;
+
+                position += padding;
+
+                if (renderable is not IMeasurable measurable)
+                {
+                    continue;
+                }
 
                 switch (Direction)
                 {
                     case LayoutDirection.Horizontal:
-                        offset = new Vector2(measurable.Dimensions.X, 0) + new Vector2(Padding.Z, 0);
+                        position += new Vector2(measurable.Dimensions.X, 0);
                         break;
 
                     case LayoutDirection.Vertical:
-                        offset = new Vector2(0, measurable.Dimensions.Y) + new Vector2(0, Padding.W);
+                        position += new Vector2(0, measurable.Dimensions.Y);
                         break;
                 }
-
-                position += offset;
             }
-
-            return Vector2.Zero;
         }
 
         protected override bool CanAddChild<T>(T child)

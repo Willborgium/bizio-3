@@ -42,6 +42,10 @@ namespace Hyjynx.Core.Services
             return this;
         }
 
+        public void Rasterize(IRenderer renderer)
+        {
+        }
+
         public void Render(IRenderer renderer)
         {
             if (!IsVisible)

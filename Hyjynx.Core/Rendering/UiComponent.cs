@@ -13,10 +13,25 @@ namespace Hyjynx.Core.Rendering
         public ICollection<IUpdateable> Bindings { get; }
         public virtual Vector2 Dimensions { get => GetDimensions(); set => throw new InvalidOperationException("Dimensions are measured for this component and cannot be set directly."); }
 
+        public Color _background;
+
         protected UiComponent()
         {
             IsVisible = true;
             Bindings = new List<IUpdateable>();
+            _background = RandomExtensions.RandomColor();
+        }
+
+        public void Rasterize(IRenderer renderer)
+        {
+            if (!IsAbsolutelyVisible())
+            {
+                return;
+            }
+
+            //renderer.Clear(_background);
+
+            RasterizeInternal(renderer);
         }
 
         public void Render(IRenderer renderer)
@@ -53,11 +68,11 @@ namespace Hyjynx.Core.Rendering
         {
             get
             {
-                var position = Parent?.GetChildAbsolutePosition(this) ?? Position;
-
-                return new Rectangle((int)position.X, (int)position.Y, (int)Dimensions.X, (int)Dimensions.Y);
+                return new Rectangle((int)Position.X, (int)Position.Y, (int)Dimensions.X, (int)Dimensions.Y);
             }
         }
+
+        protected virtual void RasterizeInternal(IRenderer renderer) { }
 
         protected abstract void RenderInternal(IRenderer renderer);
 
@@ -82,9 +97,14 @@ namespace Hyjynx.Core.Rendering
                 parent = parent.Parent;
             }
 
+            if (Dimensions.X <= 0 || Dimensions.Y <= 0)
+            {
+                return false;
+            }
+
             return true;
         }
 
-        private IDictionary<string, object> _data = new Dictionary<string, object>();
+        private readonly IDictionary<string, object> _data = new Dictionary<string, object>();
     }
 }

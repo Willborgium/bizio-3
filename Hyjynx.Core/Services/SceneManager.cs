@@ -7,14 +7,21 @@ namespace Hyjynx.Core.Services
 
     public class SceneService : ISceneService
     {
-        public event EventHandler<SceneChangedEventArgs> SceneChanged;
+        public bool IsVisible { get; set; }
+        public int ZIndex { get; set; }
+        public string? Identifier { get; set; }
 
-        public SceneService(IRenderer renderer, Func<IFirstScene> firstSceneProvider)
+        public event EventHandler<SceneChangedEventArgs>? SceneChanged;
+
+        public SceneService(Func<IFirstScene> firstSceneProvider)
         {
-            _renderer = renderer;
             _firstSceneProvider = firstSceneProvider;
             _scenes = new Stack<SceneContainer>();
             _isLoaded = false;
+
+            IsVisible = true;
+            ZIndex = 0;
+            Identifier = "scene-manager";
         }
 
         public void PushScene(IScene scene) => _nextScene = scene;
@@ -99,9 +106,14 @@ namespace Hyjynx.Core.Services
             return _scenes.Any();
         }
 
-        public void Render()
+        public void Rasterize(IRenderer renderer)
         {
-            _scenes.Peek().Scene.Render(_renderer);
+            _scenes.Peek().Scene.Rasterize(renderer);
+        }
+
+        public void Render(IRenderer renderer)
+        {
+            _scenes.Peek().Scene.Render(renderer);
         }
 
         private void TryPushFirstScene()
@@ -118,11 +130,10 @@ namespace Hyjynx.Core.Services
             _isLoaded = true;
         }
 
-        private IScene _nextScene;
+        private IScene? _nextScene;
         private int _popSceneCount;
 
         private readonly Stack<SceneContainer> _scenes;
-        private readonly IRenderer _renderer;
         private readonly Func<IFirstScene> _firstSceneProvider;
         private bool _isLoaded;
 

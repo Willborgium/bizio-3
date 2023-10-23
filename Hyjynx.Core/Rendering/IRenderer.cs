@@ -13,10 +13,14 @@ namespace Hyjynx.Core.Rendering
         void Draw(ITexture2D texture, Rectangle destination, Rectangle source, Color color);
         void DrawText(IFont font, string text, Vector2 position, Color color);
 
+        void Draw(IRenderTarget renderTarget, Rectangle destination, Color color);
+
+        IRenderTarget CreateRenderTarget2D(int width, int height);
+
+        void PushRenderTarget(IRenderTarget target);
+        IRenderTarget PopRenderTarget();
+
         void Begin();
         void End();
-
-        void Begin2D();
-        void End2D();
     }
 }

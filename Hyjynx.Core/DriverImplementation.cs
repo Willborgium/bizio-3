@@ -1,5 +1,6 @@
 ﻿using Hyjynx.Core.Rendering;
 using Hyjynx.Core.Services;
+using System.Diagnostics;
 using System.Drawing;
 
 namespace Hyjynx.Core
@@ -43,19 +44,23 @@ namespace Hyjynx.Core
 
         public void Draw()
         {
+            _sceneService.Rasterize(_renderer);
+
+            //Debug.WriteLine(">>>>> Present begin");
+
             _renderer.Begin();
 
             _renderer.Clear(Color.Coral);
 
-            _sceneService.Render();
+            _sceneService.Render(_renderer);
 
-            _renderer.Begin2D();
+            //Debug.WriteLine("Logger render");
 
-            _loggingService.Render(_renderer);
-
-            _renderer.End2D();
+            //_loggingService.Render(_renderer);
 
             _renderer.End();
+
+            //Debug.WriteLine(">>>>> Present end");
         }
 
         private readonly IWindowManagementService _windowManagementService;
