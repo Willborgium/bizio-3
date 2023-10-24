@@ -4,9 +4,27 @@ namespace Hyjynx.Core.Rendering.Interface
 {
     public class StackContainer : ContainerBase
     {
-        public LayoutDirection Direction { get; set; }
+        public LayoutDirection Direction
+        {
+            get => _direction;
+            set
+            {
+                _direction = value;
+                Arrange();
+                Measure();
+            }
+        }
 
-        public Vector4 Padding { get; set; }
+        public Vector4 Padding
+        {
+            get => _padding;
+            set
+            {
+                _padding = value;
+                Arrange();
+                Measure();
+            }
+        }
 
         protected override void Arrange()
         {
@@ -62,5 +80,8 @@ namespace Hyjynx.Core.Rendering.Interface
 
             return base.CanAddChild(child);
         }
+
+        private LayoutDirection _direction;
+        private Vector4 _padding;
     }
 }

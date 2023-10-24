@@ -20,10 +20,12 @@ namespace Hyjynx.Core.Debugging
 
         public void Initialize(float screenWidth, float screenHeight)
         {
-            AddChild(_utilityService.CreateButton("Logger", ToggleDebugInfo));
-            AddChild(_utilityService.CreateButton("Snapshot", LogSnapshot));
-            AddChild(_utilityService.CreateButton("Outlines", ToggleDebuggingOutlines));
-            AddChild(_utilityService.CreateButton("Visuals", LogVisuals));
+            AddButton("Logger",  ToggleDebugInfo);
+            AddButton("Snapshot", LogSnapshot);
+            AddButton("Visuals",LogVisuals);
+            AddToggleButton("Outlines", DebugFlag.RenderableOutlines);
+            AddToggleButton("Backgrounds", DebugFlag.RenderContainerBackgrounds);
+            AddToggleButton("Empties", DebugFlag.ShowEmptyContainers);
 
             var x = screenWidth - Dimensions.X;
             var y = screenHeight - Dimensions.Y;
@@ -31,18 +33,18 @@ namespace Hyjynx.Core.Debugging
             Offset = new Vector2(x, y);
         }
 
-        private void LogVisuals(object sender, EventArgs e)
+        private void LogVisuals()
         {
             DebuggingService.Describe(_visualRoot, _loggingService);
         }
 
-        private void ToggleDebugInfo(object sender, EventArgs e)
+        private void ToggleDebugInfo()
         {
             _loggingService.IsVisible = !_loggingService.IsVisible;
             _loggingService.Info($"Logger toggled: {_loggingService.IsVisible}");
         }
 
-        private void LogSnapshot(object sender, EventArgs e)
+        private void LogSnapshot()
         {
             var renderableCount = _visualRoot.GetChildCount<IRenderable>(true);
             var updateableCount = _visualRoot.GetChildCount<IUpdateable>(true);
@@ -53,10 +55,20 @@ namespace Hyjynx.Core.Debugging
             _loggingService.Info("[END SNAPSHOT]");
         }
 
-        private void ToggleDebuggingOutlines(object sender, EventArgs e)
+        private void AddToggleButton(string label, DebugFlag flag)
         {
-            var isEnabled = DebuggingService.IsEnabled(DebugFlag.RenderableOutlines);
-            DebuggingService.Set(DebugFlag.RenderableOutlines, !isEnabled);
+            AddButton(label, () => Toggle(flag));
+        }
+
+        private static void Toggle(DebugFlag flag)
+        {
+            var isEnabled = DebuggingService.IsEnabled(flag);
+            DebuggingService.Set(flag, !isEnabled);
+        }
+
+        private void AddButton(string label, Action handler)
+        {
+            AddChild(_utilityService.CreateButton(label, 0, 0, 150, 25, (s, e) => handler()));
         }
 
         private readonly ILoggingService _loggingService;

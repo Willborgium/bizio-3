@@ -4,6 +4,7 @@
     {
         None = 0,
         RenderableOutlines,
-        ShowEmptyContainers
+        ShowEmptyContainers,
+        RenderContainerBackgrounds
     }
 }

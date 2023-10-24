@@ -36,7 +36,7 @@ namespace Hyjynx.App.Xna
         {
             Diagnostic($"Clear to {color}");
 
-            var xColor = new Microsoft.Xna.Framework.Color(color.R, color.G, color.B, (byte)0);
+            var xColor = new Microsoft.Xna.Framework.Color(color.R, color.G, color.B, (byte)color.A);
             _graphicsDeviceManager.GraphicsDevice.Clear(xColor);
         }
 

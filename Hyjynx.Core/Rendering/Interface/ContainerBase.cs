@@ -238,7 +238,14 @@ namespace Hyjynx.Core.Rendering.Interface
 
             renderer.PushRenderTarget(_renderTarget);
 
-            renderer.Clear(Color.Transparent);
+            if (DebuggingService.IsEnabled(DebugFlag.RenderContainerBackgrounds))
+            {
+                renderer.Clear(_background);
+            }
+            else
+            {
+                renderer.Clear(Color.Transparent);
+            }
 
             foreach (var renderable in _renderables.OrderBy(r => r.ZIndex))
             {

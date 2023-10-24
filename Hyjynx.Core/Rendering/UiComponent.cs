@@ -42,8 +42,6 @@ namespace Hyjynx.Core.Rendering
                 return;
             }
 
-            //renderer.Clear(_background);
-
             RasterizeInternal(renderer);
         }
 

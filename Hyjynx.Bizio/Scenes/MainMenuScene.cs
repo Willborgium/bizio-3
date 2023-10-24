@@ -41,8 +41,6 @@ namespace Hyjynx.Bizio.Scenes
         {
             DebuggingService.IsDebuggingEnabled = _initializationArguments.IsDebugModeEnabled;
 
-            _loggingService.IsVisible = true;
-
             if (_initializationArguments.IsDebugModeEnabled)
             {
                 _visualRoot.AddChild(DebuggingService.CreateDebugContainer(_loggingService, _utilityService, _visualRoot, _initializationArguments));
@@ -51,6 +49,7 @@ namespace Hyjynx.Bizio.Scenes
             var menuScrollContainer = new ScrollContainer(_inputService)
             {
                 Dimensions = new Vector2(175, 222),
+                Direction = LayoutDirection.Horizontal
             };
 
             var menu = new StackContainer
