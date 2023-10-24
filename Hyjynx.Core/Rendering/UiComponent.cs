@@ -3,15 +3,28 @@ using System.Numerics;
 
 namespace Hyjynx.Core.Rendering
 {
-    public abstract class UiComponent : IRenderable, IUpdateable, ITranslatable, IMeasurable
+    public abstract class UiComponent : IRenderable, IUpdateable, IMeasurable
     {
         public bool IsVisible { get; set; }
         public int ZIndex { get; set; }
         public IContainer? Parent { get; set; }
-        public Vector2 Position { get; set; }
+        public Vector2 Offset { get => _offset + Parent?.ChildOffset ?? Vector2.Zero; set => _offset = value; } 
         public string? Identifier { get; set; }
         public ICollection<IUpdateable> Bindings { get; }
         public virtual Vector2 Dimensions { get => GetDimensions(); set => throw new InvalidOperationException("Dimensions are measured for this component and cannot be set directly."); }
+        public virtual Rectangle Bounds
+        {
+            get
+            {
+                var x = (int)(Offset.X + Parent?.Bounds.X ?? 0 + Parent?.ChildOffset.X ?? 0);
+                var y = (int)(Offset.Y + Parent?.Bounds.Y ?? 0 + Parent?.ChildOffset.Y ?? 0);
+
+                return new Rectangle(x, y, (int)Dimensions.X, (int)Dimensions.Y);
+            }
+            set => throw new InvalidOperationException("Bounds are measured for this component and cannot be set directly.");
+        }
+
+        protected Vector2 _offset;
 
         public Color _background;
 
@@ -68,7 +81,7 @@ namespace Hyjynx.Core.Rendering
         {
             get
             {
-                return new Rectangle((int)Position.X, (int)Position.Y, (int)Dimensions.X, (int)Dimensions.Y);
+                return new Rectangle((int)Offset.X, (int)Offset.Y, (int)Dimensions.X, (int)Dimensions.Y);
             }
         }
 

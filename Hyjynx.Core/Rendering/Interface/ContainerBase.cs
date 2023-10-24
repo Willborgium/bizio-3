@@ -10,6 +10,8 @@ namespace Hyjynx.Core.Rendering.Interface
     {
         public event EventHandler? ChildrenChanged;
 
+        public Vector2 ChildOffset { get; protected set; }
+
         public ContainerBase()
             : base()
         {
@@ -232,7 +234,7 @@ namespace Hyjynx.Core.Rendering.Interface
                 renderable.Rasterize(renderer);
             }
 
-            _renderTarget ??= renderer.CreateRenderTarget2D((int)_dimensions.X, (int)_dimensions.Y);
+            _renderTarget ??= renderer.CreateRenderTarget2D((int)Dimensions.X, (int)Dimensions.Y);
 
             renderer.PushRenderTarget(_renderTarget);
 
@@ -260,7 +262,7 @@ namespace Hyjynx.Core.Rendering.Interface
 
         protected Vector2 GetCurrentPosition()
         {
-            return Position;
+            return Offset;
         }
 
         protected override Vector2 GetDimensions() => _dimensions;
@@ -281,23 +283,13 @@ namespace Hyjynx.Core.Rendering.Interface
 
                 if (child is ITranslatable t)
                 {
-                    position = t.Position;
-                }
-
-                if (minX > position.X)
-                {
-                    minX = position.X;
-                }
-
-                if (minY > position.Y)
-                {
-                    minY = position.Y;
+                    position = t.Offset;
                 }
 
                 if (child is IMeasurable m)
                 {
-                    var right = position.X + m.Dimensions.X;
-                    var bottom = position.Y + m.Dimensions.Y;
+                    var right = m.Bounds.Right;
+                    var bottom = m.Bounds.Bottom;
 
                     if (right > maxX)
                     {

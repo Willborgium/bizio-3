@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace Hyjynx.Core.Rendering.Interface
 {
-    public class TextBox : UiComponent, IMeasurable
+    public class TextBox : UiComponent
     {
         public IFont Font { get; set; }
 
@@ -20,7 +20,7 @@ namespace Hyjynx.Core.Rendering.Interface
 
         protected override void RenderInternal(IRenderer renderer)
         {
-            var position = Position;
+            var position = Offset;
 
             renderer.DrawText(Font, Text ?? string.Empty, position, Color);
         }

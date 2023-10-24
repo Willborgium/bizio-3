@@ -31,7 +31,7 @@ namespace Hyjynx.Core.Rendering.Interface
                     continue;
                 }
 
-                translatable.Position = position + padding;
+                translatable.Offset = position + padding;
 
                 position += padding;
 

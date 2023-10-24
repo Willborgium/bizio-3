@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace Hyjynx.Core.Debugging
 {
-    public class DebugContainer : VisualContainer
+    public class DebugContainer : StackContainer
     {
         public DebugContainer(
             ILoggingService loggingService,
@@ -20,23 +20,15 @@ namespace Hyjynx.Core.Debugging
 
         public void Initialize(float screenWidth, float screenHeight)
         {
-            var root = new StackContainer
-            {
-                Padding = Vector4.One * 10,
-                Direction = LayoutDirection.Horizontal
-            };
+            AddChild(_utilityService.CreateButton("Logger", ToggleDebugInfo));
+            AddChild(_utilityService.CreateButton("Snapshot", LogSnapshot));
+            AddChild(_utilityService.CreateButton("Outlines", ToggleDebuggingOutlines));
+            AddChild(_utilityService.CreateButton("Visuals", LogVisuals));
 
-            AddChild(root);
+            var x = screenWidth - Dimensions.X;
+            var y = screenHeight - Dimensions.Y;
 
-            root.AddChild(_utilityService.CreateButton("Logger", ToggleDebugInfo));
-            root.AddChild(_utilityService.CreateButton("Snapshot", LogSnapshot));
-            root.AddChild(_utilityService.CreateButton("Outlines", ToggleDebuggingOutlines));
-            root.AddChild(_utilityService.CreateButton("Visuals", LogVisuals));
-
-            var x = screenWidth - root.Dimensions.X;
-            var y = screenHeight - root.Dimensions.Y;
-
-            root.Position = new Vector2(x, y);
+            Offset = new Vector2(x, y);
         }
 
         private void LogVisuals(object sender, EventArgs e)

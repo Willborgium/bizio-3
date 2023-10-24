@@ -2,8 +2,9 @@
 
 namespace Hyjynx.Core.Rendering
 {
-    public interface IContainer : IUpdateable, IRenderable, ITranslatable, IEnumerable<IIdentifiable>
+    public interface IContainer : IUpdateable, IRenderable, IMeasurable, IEnumerable<IIdentifiable>
     {
+        Vector2 ChildOffset { get; }
         void AddChild(IIdentifiable child);
         void RemoveChild(IIdentifiable child);
         void RemoveChild(string identifier);

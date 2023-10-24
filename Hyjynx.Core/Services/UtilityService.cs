@@ -21,7 +21,7 @@ namespace Hyjynx.Core.Services
             var button = new Button(metadata, _inputService)
             {
                 Text = text,
-                Position = new Vector2(x, y),
+                Offset = new Vector2(x, y),
                 Args = args ?? EventArgs.Empty
             };
             button.SetDimensions(new Vector2(width, height));

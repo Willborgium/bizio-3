@@ -49,7 +49,7 @@ namespace Hyjynx.Core.Rendering.Interface
 
             ButtonState nextState = ButtonState.Default;
 
-            if (Destination.Contains(mouse.Position))
+            if (Bounds.Contains(mouse.Position))
             {
                 if (mouse.LeftButton == InputButtonState.Down)
                 {

@@ -56,7 +56,7 @@ namespace Hyjynx.Core
 
             //Debug.WriteLine("Logger render");
 
-            //_loggingService.Render(_renderer);
+            _loggingService.Render(_renderer);
 
             _renderer.End();
 

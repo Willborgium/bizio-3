@@ -25,7 +25,7 @@ namespace Hyjynx.Core.Rendering.Interface
 
             int? wheelValue = null;
 
-            if (Destination.Contains(mouse.Position))
+            if (Bounds.Contains(mouse.Position))
             {
                 wheelValue = mouse.WheelValue;
             }
@@ -52,18 +52,16 @@ namespace Hyjynx.Core.Rendering.Interface
 
                 if (Direction == LayoutDirection.Vertical)
                 {
-                    _offset = new Vector2(0, _offset.Y + speed);
+                    ChildOffset = new Vector2(0, ChildOffset.Y + speed);
                 }
                 else
                 {
-                    _offset = new Vector2(_offset.X + speed, 0);
+                    ChildOffset = new Vector2(ChildOffset.X + speed, 0);
                 }
             }
 
             _lastWheelValue = wheelValue;
         }
-
-        protected Vector2 _offset = Vector2.Zero;
 
         private Vector2 _dimensions;
         private readonly IInputService _inputService;

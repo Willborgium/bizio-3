@@ -67,7 +67,7 @@ namespace Hyjynx.Bizio.Scenes
             var x = _initializationArguments.ScreenWidth - container.Dimensions.X;
             var y = (_initializationArguments.ScreenHeight - container.Dimensions.Y) / 2;
 
-            container.Position = new Vector2(x, y);
+            container.Offset = new Vector2(x, y);
 
             return container;
         }
@@ -78,7 +78,7 @@ namespace Hyjynx.Bizio.Scenes
 
             var container = new StackContainer
             {
-                Position = new Vector2(500, 0),
+                Offset = new Vector2(500, 0),
                 Padding = new Vector4(50, 20, 50, 20),
                 Direction = LayoutDirection.Horizontal,
                 Identifier = "container-headline"
@@ -301,7 +301,7 @@ namespace Hyjynx.Bizio.Scenes
         {
             var container = new VisualContainer
             {
-                Position = new Vector2(0, 100),
+                Offset = new Vector2(0, 100),
                 Identifier = "container-people",
                 IsVisible = false
             };
@@ -326,7 +326,7 @@ namespace Hyjynx.Bizio.Scenes
         {
             var root = new StackContainer
             {
-                Position = new Vector2(400, 0),
+                Offset = new Vector2(400, 0),
                 Padding = new Vector4(0, 10, 0, 10),
                 Identifier = "container-person-details"
             };
@@ -384,7 +384,7 @@ namespace Hyjynx.Bizio.Scenes
                 {
                     Font = font,
                     Color = Color.Black,
-                    Position = new Vector2(75, 0),
+                    Offset = new Vector2(75, 0),
                     Label = skill.Name,
                     LabelWidth = 50,
                     Text = $"{personSkill.Value:0.0}"
@@ -448,7 +448,7 @@ namespace Hyjynx.Bizio.Scenes
         {
             var container = new VisualContainer
             {
-                Position = new Vector2(0, 100),
+                Offset = new Vector2(0, 100),
                 Identifier = "container-projects",
                 IsVisible = false
             };
@@ -473,7 +473,7 @@ namespace Hyjynx.Bizio.Scenes
         {
             var root = new StackContainer
             {
-                Position = new Vector2(400, 0),
+                Offset = new Vector2(400, 0),
                 Padding = new Vector4(0, 10, 0, 10),
                 Identifier = "container-project-details"
             };
@@ -547,7 +547,7 @@ namespace Hyjynx.Bizio.Scenes
                 {
                     Font = font,
                     Color = Color.Black,
-                    Position = new Vector2(50, 0),
+                    Offset = new Vector2(50, 0),
                     Label = skill.Name,
                     LabelWidth = 75,
                     Text = $"{requirement.TargetAmount:0.0}"
@@ -589,7 +589,7 @@ namespace Hyjynx.Bizio.Scenes
             var myCompanyContainer = new VisualContainer
             {
                 Identifier = "container-my-company",
-                Position = new Vector2(0, 100),
+                Offset = new Vector2(0, 100),
                 IsVisible = false
             };
 
@@ -612,7 +612,7 @@ namespace Hyjynx.Bizio.Scenes
 
             var detailsContainer = new ExclusiveVisualContainer
             {
-                Position = new Vector2(400, 0),
+                Offset = new Vector2(400, 0),
                 Identifier = "my-company-details"
             };
 
@@ -706,7 +706,7 @@ namespace Hyjynx.Bizio.Scenes
         {
             var container = new StackContainer
             {
-                Position = new Vector2(400, 0),
+                Offset = new Vector2(400, 0),
                 Direction = LayoutDirection.Vertical,
                 Padding = new Vector4(0, 5, 0, 5),
                 Identifier = "container-my-company-message-details"
@@ -831,7 +831,7 @@ namespace Hyjynx.Bizio.Scenes
         {
             var projectContainer = new VisualContainer
             {
-                Position = new Vector2(400, 0),
+                Offset = new Vector2(400, 0),
                 Identifier = "container-my-company-project-details"
             };
 
@@ -925,7 +925,7 @@ namespace Hyjynx.Bizio.Scenes
                 {
                     Font = font,
                     Color = Color.Black,
-                    Position = new Vector2(50, 0),
+                    Offset = new Vector2(50, 0),
                     Label = skill.Name,
                     LabelWidth = 75
                 };
@@ -1081,7 +1081,7 @@ namespace Hyjynx.Bizio.Scenes
         {
             var container = new StackContainer
             {
-                Position = new Vector2(400, 0),
+                Offset = new Vector2(400, 0),
                 Padding = new Vector4(0, 10, 0, 10),
                 Identifier = "container-my-company-project-allocations"
             };
@@ -1142,7 +1142,7 @@ namespace Hyjynx.Bizio.Scenes
         {
             var root = new StackContainer
             {
-                Position = new Vector2(400, 0),
+                Offset = new Vector2(400, 0),
                 Padding = new Vector4(0, 10, 0, 10),
                 Identifier = "container-my-company-employee-details"
             };
@@ -1209,7 +1209,7 @@ namespace Hyjynx.Bizio.Scenes
                 {
                     Font = font,
                     Color = Color.Black,
-                    Position = new Vector2(75, 0),
+                    Offset = new Vector2(75, 0),
                     Label = skill.Name,
                     LabelWidth = 50,
                     Text = $"{personSkill.Value:0.0}"
