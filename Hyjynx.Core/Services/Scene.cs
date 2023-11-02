@@ -24,11 +24,7 @@ namespace Hyjynx.Core.Services
 
         public void Render(IRenderer renderer)
         {
-            renderer.Begin2D();
-
             _visualRoot?.Render(renderer);
-
-            renderer.End2D();
         }
 
         public virtual void LoadContent()

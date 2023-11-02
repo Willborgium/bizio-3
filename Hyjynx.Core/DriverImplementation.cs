@@ -43,19 +43,15 @@ namespace Hyjynx.Core
 
         public void Draw()
         {
-            _renderer.Begin();
+            _renderer.Begin2D();
 
             _renderer.Clear(Color.Coral);
 
             _sceneService.Render();
 
-            _renderer.Begin2D();
-
             _loggingService.Render(_renderer);
 
             _renderer.End2D();
-
-            _renderer.End();
         }
 
         private readonly IWindowManagementService _windowManagementService;
