@@ -16,6 +16,7 @@ namespace Hyjynx.Core.Debugging
             _utilityService = utilityService;
             _visualRoot = visualRoot;
             ZIndex = int.MaxValue;
+            Padding = new Vector4(0, 5, 0, 5);
         }
 
         public void Initialize(float screenWidth, float screenHeight)

@@ -69,15 +69,15 @@ namespace Hyjynx.App.Xna
 
             var xnaFont = ToXna(font);
             var xnaPosition = ToXna(position);
-            var xnaColor = ToXna(color);
+            var xnaColor = ToXna(Color.Blue);
 
-            _spriteBatch.DrawString(xnaFont, text, xnaPosition, xnaColor);
+            _spriteBatch.DrawString(xnaFont, text, xnaPosition, xnaColor, 0, Vector2.Zero, 1f, SpriteEffects.None, 0f);
         }
 
         public void Draw(IRenderTarget renderTarget, Rectangle destination, Color color)
         {
             Diagnostic($"Draw render target {renderTarget.Identifier} ({renderTarget.Width}, {renderTarget.Height}) at ({destination})");
-
+            
             _spriteBatch.Draw(renderTarget as XnaRenderTarget2D, ToXna(destination), ToXna(color));
         }
 
@@ -110,7 +110,7 @@ namespace Hyjynx.App.Xna
         {
             Diagnostic("Spritebatch begin");
 
-            _spriteBatch.Begin();
+            _spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.NonPremultiplied, null, DepthStencilState.Default, null, null, null);
         }
 
         private void EndSpriteBatch()

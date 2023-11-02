@@ -48,7 +48,7 @@ namespace Hyjynx.Bizio.Scenes
 
             var menuScrollContainer = new ScrollContainer(_inputService)
             {
-                Dimensions = new Vector2(175, 222),
+                Dimensions = new Vector2(1000, 1000),
                 Direction = LayoutDirection.Horizontal
             };
 
@@ -72,7 +72,7 @@ namespace Hyjynx.Bizio.Scenes
             var x = (_initializationArguments.ScreenWidth - menuScrollContainer.Dimensions.X) / 2;
             var y = (_initializationArguments.ScreenHeight - menuScrollContainer.Dimensions.Y) / 2;
 
-            menuScrollContainer.Offset = new Vector2(x, y);
+            menuScrollContainer.Offset = new Vector2(500, 500);
 
             _visualRoot.AddChild(menuScrollContainer);
         }

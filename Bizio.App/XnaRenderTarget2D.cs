@@ -1,7 +1,6 @@
 ﻿using Hyjynx.Core.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Numerics;
 
 namespace Hyjynx.App.Xna
 {
@@ -14,7 +13,5 @@ namespace Hyjynx.App.Xna
         {
             Identifier = $"{Guid.NewGuid()}";
         }
-
-
     }
 }
