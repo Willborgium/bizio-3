@@ -5,9 +5,11 @@ VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyjynx.App.Xna", "Hyjynx.App.Xna.csproj", "{5AC1ACDC-B8B3-41BA-B7C8-B6D23F518305}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hyjynx.Core", "..\Hyjynx.Core\Hyjynx.Core.csproj", "{B691E1D7-DB14-4F0E-8259-C63EC3981B73}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyjynx.Core", "..\Hyjynx.Core\Hyjynx.Core.csproj", "{B691E1D7-DB14-4F0E-8259-C63EC3981B73}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hyjynx.Bizio", "..\Hyjynx.Bizio\Hyjynx.Bizio.csproj", "{7B876E2C-2BE2-4D02-9181-38DDE10A8F3B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyjynx.Bizio", "..\Hyjynx.Bizio\Hyjynx.Bizio.csproj", "{7B876E2C-2BE2-4D02-9181-38DDE10A8F3B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hyjynx.Battler", "..\Hyjynx.Battler\Hyjynx.Battler.csproj", "{12AF4E4D-4AB1-43FD-8F5E-16AD62B3E40D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{7B876E2C-2BE2-4D02-9181-38DDE10A8F3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B876E2C-2BE2-4D02-9181-38DDE10A8F3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7B876E2C-2BE2-4D02-9181-38DDE10A8F3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12AF4E4D-4AB1-43FD-8F5E-16AD62B3E40D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12AF4E4D-4AB1-43FD-8F5E-16AD62B3E40D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12AF4E4D-4AB1-43FD-8F5E-16AD62B3E40D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12AF4E4D-4AB1-43FD-8F5E-16AD62B3E40D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

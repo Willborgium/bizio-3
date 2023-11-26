@@ -27,6 +27,20 @@ namespace Hyjynx.Core.Services
 
         public IMouseState GetMouseState() => _previousMouseState;
 
+        public KeyState GetKeyState(Keys key) => _previousKeyStates?[key] ?? KeyState.Up;
+
+        public KeyState[] GetKeyStates(params Keys[] keys)
+        {
+            var states = new KeyState[keys.Length];
+
+            for (var index = 0; index < keys.Length; index++)
+            {
+                states[index] = _previousKeyStates?[keys[index]] ?? KeyState.Up;
+            }
+
+            return states;
+        }
+
         private void UpdateKeyStates()
         {
             var currentKeyStates = _keyStateProvider.GetKeyStates();

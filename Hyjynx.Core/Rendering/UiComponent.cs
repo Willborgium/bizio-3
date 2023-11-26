@@ -85,6 +85,6 @@ namespace Hyjynx.Core.Rendering
             return true;
         }
 
-        private IDictionary<string, object> _data = new Dictionary<string, object>();
+        private readonly IDictionary<string, object> _data = new Dictionary<string, object>();
     }
 }

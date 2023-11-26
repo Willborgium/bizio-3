@@ -12,6 +12,7 @@ namespace Hyjynx.Bizio.Scenes
     {
         private readonly IDataService _dataService;
         private readonly ISceneService _sceneService;
+        private readonly IUtilityService _utilityService;
         private readonly Func<MainMenuScene> _mainMenuSceneFactory;
 
         public InitializationScene(
@@ -20,40 +21,20 @@ namespace Hyjynx.Bizio.Scenes
             ILoggingService loggingService,
             IDataService dataService,
             ISceneService sceneService,
+            IUtilityService utilityService,
             Func<MainMenuScene> mainMenuSceneFactory
             )
             : base(resourceService, contentService, loggingService)
         {
             _dataService = dataService;
             _sceneService = sceneService;
+            _utilityService = utilityService;
             _mainMenuSceneFactory = mainMenuSceneFactory;
         }
 
         public override void LoadContent()
         {
-            var font = _contentService.Load<IFont>("font-default");
-            _resourceService.Set("font-default", font);
-            DebuggingService.Font = font;
-
-            var pixel = _contentService.Load<ITexture2D>("pixel");
-            _resourceService.Set("texture-pixel", pixel);
-            DebuggingService.PixelTexture = pixel;
-
-            _loggingService.Initialize(font, pixel);
-
-            var buttonSpritesheet = _contentService.Load<ITexture2D>("greySheet");
-            var buttonMetadata = new ButtonMetadata
-            {
-                Font = font,
-                Spritesheet = buttonSpritesheet,
-                DefaultSource = new Rectangle(0, 143, 190, 45),
-                HoveredSource = new Rectangle(0, 98, 190, 45),
-                ClickedSource = new Rectangle(0, 188, 190, 49),
-                DisabledSource = new Rectangle(0, 0, 195, 49)
-            };
-
-            _resourceService.Set("button-spritesheet-default", buttonSpritesheet);
-            _resourceService.Set("button-metadata-default", buttonMetadata);
+            _utilityService.InitializeLogging(_contentService);
 
             _dataService.Initialize();
 

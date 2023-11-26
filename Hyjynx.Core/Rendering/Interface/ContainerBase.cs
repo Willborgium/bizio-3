@@ -75,6 +75,8 @@ namespace Hyjynx.Core.Rendering.Interface
             ChildrenChanged?.Invoke(this, EventArgs.Empty);
         }
 
+        public void Add(IIdentifiable child) => AddChild(child);
+
         protected virtual void OnChildAdded(IIdentifiable child)
         {
         }

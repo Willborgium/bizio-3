@@ -1,10 +1,19 @@
-﻿using Hyjynx.App.Xna;
-using Hyjynx.Bizio;
+﻿using Hyjynx.Battler;
 using Hyjynx.Core;
 using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
 
-new ServiceCollection()
-    .AddCoreServices()
-    .AddDriverServices()
-    .AddBizioServices()
-    .RunDriver();
+namespace Hyjynx.App.Xna
+{
+    public static class Program
+    {
+        public static void Main(string[] args)
+        {
+            new ServiceCollection()
+                .AddCoreServices()
+                .AddDriverServices()
+                .AddBattlerServices()
+                .RunDriver();
+        }
+    }
+}

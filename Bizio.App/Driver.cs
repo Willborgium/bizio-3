@@ -20,9 +20,9 @@ namespace Hyjynx.App.Xna
         {
             _driverImplementation.Exit += (s, e) => Exit();
 
-            _driverImplementation.Initialize();
-
             IsMouseVisible = true;
+
+            _driverImplementation.Initialize();
 
             base.Initialize();
         }

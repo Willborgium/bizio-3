@@ -1,4 +1,6 @@
-﻿using Hyjynx.Core.Rendering.Interface;
+﻿using Hyjynx.Core.Rendering;
+using Hyjynx.Core.Rendering.Interface;
+using System.Numerics;
 
 namespace Hyjynx.Core.Services
 {
@@ -8,5 +10,7 @@ namespace Hyjynx.Core.Services
         Button CreateButton<T>(string text, EventHandler<T> handler, T args = null)
             where T : EventArgs;
         Button CreateButton(string text, EventHandler handler, EventArgs args = null);
+        void InitializeLogging(IContentService contentService);
+        void TryAddDebuggingContainer(IContainer root);
     }
 }

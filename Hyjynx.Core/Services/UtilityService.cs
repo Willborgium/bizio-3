@@ -1,4 +1,7 @@
-﻿using Hyjynx.Core.Rendering.Interface;
+﻿using Hyjynx.Core.Debugging;
+using Hyjynx.Core.Rendering;
+using Hyjynx.Core.Rendering.Interface;
+using System.Drawing;
 using System.Numerics;
 
 namespace Hyjynx.Core.Services
@@ -7,11 +10,15 @@ namespace Hyjynx.Core.Services
     {
         public UtilityService(
             IResourceService resourceService,
-            IInputService inputService
+            IInputService inputService,
+            ILoggingService loggingService,
+            InitializationArguments initializationArguments
             )
         {
             _resourceService = resourceService;
             _inputService = inputService;
+            _loggingService = loggingService;
+            _initializationArguments = initializationArguments;
         }
 
         public Button CreateButton(string text, int x, int y, int width, int height, EventHandler handler, EventArgs args = null)
@@ -42,7 +49,51 @@ namespace Hyjynx.Core.Services
             return CreateButton(text, 0, 0, 300, 50, handler, args);
         }
 
+        public void InitializeLogging(IContentService contentService)
+        {
+            DebuggingService.IsDebuggingEnabled = _initializationArguments.IsDebugModeEnabled;
+
+            var font = contentService.Load<IFont>("font-default");
+            _resourceService.Set("font-default", font);
+            DebuggingService.Font = font;
+
+            var pixel = contentService.Load<ITexture2D>("pixel");
+            _resourceService.Set("texture-pixel", pixel);
+            DebuggingService.PixelTexture = pixel;
+
+            _loggingService.Initialize(font, pixel);
+
+            var buttonSpritesheet = contentService.Load<ITexture2D>("greySheet");
+            var buttonMetadata = new ButtonMetadata
+            {
+                Font = font,
+                Spritesheet = buttonSpritesheet,
+                DefaultSource = new Rectangle(0, 143, 190, 45),
+                HoveredSource = new Rectangle(0, 98, 190, 45),
+                ClickedSource = new Rectangle(0, 188, 190, 49),
+                DisabledSource = new Rectangle(0, 0, 195, 49)
+            };
+
+            _resourceService.Set("button-spritesheet-default", buttonSpritesheet);
+            _resourceService.Set("button-metadata-default", buttonMetadata);
+        }
+
+        public void TryAddDebuggingContainer(IContainer root)
+        {
+            if (_initializationArguments.IsDebugModeEnabled)
+            {
+                var debugContainer = DebuggingService.CreateDebugContainer(_loggingService, this, root, _initializationArguments);
+                debugContainer.Bind(c =>
+                {
+                    c.IsVisible = _inputService.GetKeyStates(Keys.LeftShift, Keys.OemTilde).All(k => k == KeyState.Down);
+                });
+                root.AddChild(debugContainer);
+            }
+        }
+
         private readonly IResourceService _resourceService;
         private readonly IInputService _inputService;
+        private readonly ILoggingService _loggingService;
+        private readonly InitializationArguments _initializationArguments;
     }
 }

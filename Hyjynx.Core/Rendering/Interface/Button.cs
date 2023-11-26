@@ -59,7 +59,10 @@ namespace Hyjynx.Core.Rendering.Interface
                 {
                     if (_state == ButtonState.Clicked)
                     {
-                        Clicked?.Invoke(this, Args);
+                        Task.Factory.StartNew(() =>
+                        {
+                            Clicked?.Invoke(this, Args);
+                        });
                     }
 
                     nextState = ButtonState.Hovered;

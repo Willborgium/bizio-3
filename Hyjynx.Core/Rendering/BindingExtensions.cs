@@ -1,5 +1,4 @@
-﻿using Hyjynx.Core.Rendering;
-using Hyjynx.Core.Rendering.Interface;
+﻿using Hyjynx.Core.Rendering.Interface;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 

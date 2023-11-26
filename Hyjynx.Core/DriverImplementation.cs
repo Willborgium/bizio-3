@@ -1,12 +1,11 @@
 ﻿using Hyjynx.Core.Rendering;
 using Hyjynx.Core.Services;
-using System.Drawing;
 
 namespace Hyjynx.Core
 {
     public class DriverImplementation : IDriverImplementation
     {
-        public event EventHandler Exit;
+        public event EventHandler? Exit;
 
         public DriverImplementation(
             IWindowManagementService windowManagementService,
@@ -37,7 +36,7 @@ namespace Hyjynx.Core
 
             if (!_sceneService.Update())
             {
-                Exit(this, EventArgs.Empty);
+                Exit?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -45,7 +44,7 @@ namespace Hyjynx.Core
         {
             _renderer.Begin2D();
 
-            _renderer.Clear(Color.Coral);
+            _renderer.Clear(_arguments.ClearColor);
 
             _sceneService.Render();
 

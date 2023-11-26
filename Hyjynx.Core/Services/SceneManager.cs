@@ -7,7 +7,7 @@ namespace Hyjynx.Core.Services
 
     public class SceneService : ISceneService
     {
-        public event EventHandler<SceneChangedEventArgs> SceneChanged;
+        public event EventHandler<SceneChangedEventArgs>? SceneChanged;
 
         public SceneService(IRenderer renderer, Func<IFirstScene> firstSceneProvider)
         {
@@ -31,7 +31,7 @@ namespace Hyjynx.Core.Services
         {
             TryPushFirstScene();
 
-            SceneContainer currentScene = null;
+            SceneContainer? currentScene = null;
 
             if (_scenes.Any())
             {
@@ -118,7 +118,7 @@ namespace Hyjynx.Core.Services
             _isLoaded = true;
         }
 
-        private IScene _nextScene;
+        private IScene? _nextScene;
         private int _popSceneCount;
 
         private readonly Stack<SceneContainer> _scenes;

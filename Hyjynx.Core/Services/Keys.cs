@@ -9,6 +9,8 @@
         D,
         O,
         P,
-        Q
+        Q,
+        LeftShift,
+        OemTilde
     }
 }

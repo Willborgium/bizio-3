@@ -9,5 +9,7 @@
         event EventHandler<ValueChangedEventArgs<IMouseState>> MouseWheelChanged;
 
         IMouseState GetMouseState();
+        KeyState GetKeyState(Keys key);
+        KeyState[] GetKeyStates(params Keys[] keys);
     }
 }
