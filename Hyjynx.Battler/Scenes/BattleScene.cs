@@ -120,7 +120,10 @@ namespace Hyjynx.Battler.Scenes
                 Position = new Vector2(300, 0)
             };
 
-            container.AddChild(_utilityService.CreateButton("Attack", OnAttackButtonPressed));
+            var attackButton = _utilityService.CreateButton("Attack", OnAttackButtonPressed);
+            attackButton.Bind(b => b.IsEnabled = battler.Attacks.Sum(a => a.PowerPoints) > 0);
+
+            container.AddChild(attackButton);
             container.AddChild(_utilityService.CreateButton("Tools", OnToolsButtonPressed));
             container.AddChild(_utilityService.CreateButton("Retreat", OnRetreatButtonPressed));
 
@@ -140,7 +143,13 @@ namespace Hyjynx.Battler.Scenes
 
             foreach (var attack in  battler.Attacks)
             {
-                container.AddChild(_utilityService.CreateButton(attack.Name, (s, e) => OnPlayerAttackSelected(battler, attack)));
+                var button = _utilityService.CreateButton(attack.Name, (s, e) => OnPlayerAttackSelected(battler, attack));
+
+                button.Bind(b => b.Text = $"{attack.Name} ({attack.PowerPoints}/{attack.MaxPowerPoints})");
+
+                button.Bind(b => b.IsEnabled = attack.PowerPoints > 0);
+
+                container.AddChild(button);
             }
 
             container.Bind(c => c.IsVisible = _battleState == BattleState.PlayerAttackMenu);
@@ -200,7 +209,12 @@ namespace Hyjynx.Battler.Scenes
         {
             var battleData = _resourceService.Get<BattleData>("battle-data");
 
-            _computerBattleAction = new BattleAction(battleData.ComputerBattler, battleData.ComputerBattler.Attacks.Random());
+            var selectedAttack = battleData.ComputerBattler.Attacks
+                .Where(a => a.PowerPoints > 0)
+                .OrderByDescending(a => a.Power)
+                .FirstOrDefault();
+
+            _computerBattleAction = new BattleAction(battleData.ComputerBattler, selectedAttack);
 
             SetBattleState(BattleState.ComputerAttackSelected);
         }
@@ -213,9 +227,25 @@ namespace Hyjynx.Battler.Scenes
 
             battleData.ComputerBattler.Health -= _playerBattleAction.Attack.Power;
 
+            _playerBattleAction.Attack.PowerPoints -= 1;
+
+            if (battleData.ComputerBattler.Health <=0)
+            {
+                SetBattleState(BattleState.PlayerWins);
+                return;
+            }
+
             SetBattleState(BattleState.ComputerExecutingAttackAction);
 
             battleData.PlayerBattler.Health -= _computerBattleAction.Attack.Power;
+
+            _computerBattleAction.Attack.PowerPoints -= 1;
+
+            if (battleData.PlayerBattler.Health <= 0)
+            {
+                SetBattleState(BattleState.ComputerWins);
+                return;
+            }
 
             SetBattleState(BattleState.PlayerMainMenu);
         }
@@ -251,7 +281,9 @@ namespace Hyjynx.Battler.Scenes
             PlayerRetreatSelected,
             ComputerAttackSelected,
             PlayerExecutingAttackAction,
-            ComputerExecutingAttackAction
+            ComputerExecutingAttackAction,
+            PlayerWins,
+            ComputerWins
         }
 
         private record BattleAction(BattlerData Battler, BattlerAttackData? Attack);

@@ -7,20 +7,13 @@ namespace Hyjynx.Battler.Model
         public BattlerData ComputerBattler { get; set; }
     }
 
-    internal class BattlerBattleData
-    {
-        public BattlerData Battler { get; set; }
-        public int Health { get; set; }
-    }
-
-
     internal class BattlerData
     {
         public Guid Id { get; set; }
 
         public string Name { get; set; }
 
-        public int Health { get; set; }
+        public short Health { get; set; }
 
         public ICollection<BattlerAttackData> Attacks { get; set; }
     }
@@ -29,6 +22,10 @@ namespace Hyjynx.Battler.Model
     {
         public string Name { get; set; }
 
-        public int Power { get; set; }
+        public byte Power { get; set; }
+
+        public byte MaxPowerPoints { get; set; }
+
+        public byte PowerPoints { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Hyjynx.Battler.Model;
+using Hyjynx.Core;
 using Hyjynx.Core.Services;
 
 namespace Hyjynx.Battler.Scenes
@@ -20,6 +21,58 @@ namespace Hyjynx.Battler.Scenes
             _battleSceneFactory = battleSceneFactory;
         }
 
+        private readonly IEnumerable<BattlerAttackData> _attacks = new[]
+        {
+            new BattlerAttackData
+            {
+                Name = "Kick",
+                Power = 5,
+                MaxPowerPoints = 20,
+                PowerPoints = 20
+            },
+            new BattlerAttackData
+            {
+                Name = "Drop Kick",
+                Power = 8,
+                MaxPowerPoints = 10,
+                PowerPoints = 10
+            },
+            new BattlerAttackData
+            {
+                Name = "Punch",
+                Power = 10,
+                MaxPowerPoints = 10,
+                PowerPoints = 10
+            },
+            new BattlerAttackData
+            {
+                Name = "Slash",
+                Power = 15,
+                MaxPowerPoints = 5,
+                PowerPoints = 5
+            }
+        };
+
+        private ICollection<BattlerAttackData> GenerateRandomAttacks(int count, byte? powerPoints = null)
+        {
+            var output = new List<BattlerAttackData>();
+
+            for (var index = 0; index < count; index++)
+            {
+                var attack = _attacks.Random(a => !output.Any(o => o.Name == a.Name));
+
+                output.Add(new BattlerAttackData
+                {
+                    Name = attack.Name,
+                    Power = attack.Power,
+                    MaxPowerPoints = attack.MaxPowerPoints,
+                    PowerPoints = powerPoints ?? attack.PowerPoints
+                });
+            }
+
+            return output;
+        }
+
         public override void LoadContent()
         {
             _utilityService.InitializeLogging(_contentService);
@@ -31,40 +84,16 @@ namespace Hyjynx.Battler.Scenes
             {
                 Id = Guid.NewGuid(),
                 Name = "Player Battler",
-                Health = 100,
-                Attacks = new List<BattlerAttackData>
-                {
-                    new BattlerAttackData
-                    {
-                        Name = "Punch",
-                        Power = 10
-                    },
-                    new BattlerAttackData
-                    {
-                        Name = "Kick",
-                        Power = 5
-                    }
-                }
+                Health = (short)Random.Shared.Next(50, 100),
+                Attacks = GenerateRandomAttacks(2)
             };
 
             var b2 = new BattlerData
             {
                 Id = Guid.NewGuid(),
                 Name = "AI Battler",
-                Health = 100,
-                Attacks = new List<BattlerAttackData>
-                {
-                    new BattlerAttackData
-                    {
-                        Name = "Punch",
-                        Power = 10
-                    },
-                    new BattlerAttackData
-                    {
-                        Name = "Kick",
-                        Power = 5
-                    }
-                }
+                Health = (short)Random.Shared.Next(50, 100),
+                Attacks = GenerateRandomAttacks(2, 2)
             };
 
             var battle = new BattleData
