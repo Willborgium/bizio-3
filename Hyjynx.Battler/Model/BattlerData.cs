@@ -16,6 +16,15 @@ namespace Hyjynx.Battler.Model
         public short Health { get; set; }
 
         public ICollection<BattlerAttackData> Attacks { get; set; }
+
+        public ICollection<BattlerToolData> Tools { get; set; }
+    }
+
+    internal class BattlerToolData
+    {
+        public string Name { get; set; }
+
+        public byte Count { get; set; }
     }
 
     internal class BattlerAttackData

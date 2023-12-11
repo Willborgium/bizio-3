@@ -53,6 +53,30 @@ namespace Hyjynx.Battler.Scenes
             }
         };
 
+        private readonly IEnumerable<BattlerToolData> _tools = new[]
+        {
+            new BattlerToolData
+            {
+                Name = "X Attack",
+                Count = 3
+            },
+            new BattlerToolData 
+            {
+                Name = "X Defense",
+                Count = 3
+            },
+            new BattlerToolData
+            {
+                Name = "X Speed",
+                Count = 3
+            },
+            new BattlerToolData
+            {
+                Name = "X HP",
+                Count = 3
+            }
+        };
+
         private ICollection<BattlerAttackData> GenerateRandomAttacks(int count, byte? powerPoints = null)
         {
             var output = new List<BattlerAttackData>();
@@ -73,6 +97,24 @@ namespace Hyjynx.Battler.Scenes
             return output;
         }
 
+        private ICollection<BattlerToolData> GenerateRandomTools(int distinctToolCount, byte? countPerTool = null)
+        {
+            var output = new List<BattlerToolData>();
+
+            for (var index = 0; index < distinctToolCount; index++)
+            {
+                var tool = _tools.Random(a => !output.Any(o => o.Name == a.Name));
+
+                output.Add(new BattlerToolData
+                {
+                    Name = tool.Name,
+                    Count = countPerTool ?? tool.Count
+                });
+            }
+
+            return output;
+        }
+
         public override void LoadContent()
         {
             _utilityService.InitializeLogging(_contentService);
@@ -85,7 +127,8 @@ namespace Hyjynx.Battler.Scenes
                 Id = Guid.NewGuid(),
                 Name = "Player Battler",
                 Health = (short)Random.Shared.Next(50, 100),
-                Attacks = GenerateRandomAttacks(2)
+                Attacks = GenerateRandomAttacks(2),
+                Tools = GenerateRandomTools(2)
             };
 
             var b2 = new BattlerData
@@ -93,7 +136,8 @@ namespace Hyjynx.Battler.Scenes
                 Id = Guid.NewGuid(),
                 Name = "AI Battler",
                 Health = (short)Random.Shared.Next(50, 100),
-                Attacks = GenerateRandomAttacks(2, 2)
+                Attacks = GenerateRandomAttacks(2, 2),
+                Tools = GenerateRandomTools(2)
             };
 
             var battle = new BattleData

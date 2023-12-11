@@ -30,9 +30,9 @@ namespace Hyjynx.Battler.Scenes
         {
             _utilityService.TryAddDebuggingContainer(_visualRoot);
 
-            var battleData = _resourceService.Get<BattleData>("battle-data");
+            var battleData = _resourceService.Get<BattleData>("battle-data") ?? throw new Exception("Missing battle data");
 
-            var font = _resourceService.Get<IFont>("font-default");
+            var font = _resourceService.Get<IFont>("font-default") ?? throw new Exception("Cannot find default font");
 
             var state = new TextBox
             {
@@ -45,12 +45,22 @@ namespace Hyjynx.Battler.Scenes
             {
                 switch (_battleState)
                 {
-                    case BattleState.PlayerExecutingAttackAction:
-                        tb.Text = $"Player battler '{_playerBattleAction.Battler.Name}' executing attack '{_playerBattleAction.Attack.Name}'";
+                    case BattleState.PlayerExecutingAction:
+                        if (_playerBattleAction == null)
+                        {
+                            SetBattleState(BattleState.Exception);
+                            break;
+                        }
+                        tb.Text = GenerateBattleActionDescription("Player", _playerBattleAction);
                         break;
 
-                    case BattleState.ComputerExecutingAttackAction:
-                        tb.Text = $"Player battler '{_computerBattleAction.Battler.Name}' executing attack '{_computerBattleAction.Attack.Name}'";
+                    case BattleState.ComputerExecutingAction:
+                        if (_computerBattleAction == null)
+                        {
+                            SetBattleState(BattleState.Exception);
+                            break;
+                        }
+                        tb.Text = GenerateBattleActionDescription("Computer", _computerBattleAction);
                         break;
 
                     default:
@@ -66,6 +76,7 @@ namespace Hyjynx.Battler.Scenes
                 CreateBattleStatsContainer(battleData.PlayerBattler),
                 CreatePlayerMainMenu(battleData.PlayerBattler),
                 CreatePlayerAttackMenu(battleData.PlayerBattler),
+                CreatePlayerToolsMenu(battleData.PlayerBattler)
             };
 
             playerContainer.Position = new Vector2(0, _initializationArguments.ScreenHeight - playerContainer.Dimensions.Y);
@@ -77,10 +88,30 @@ namespace Hyjynx.Battler.Scenes
             _visualRoot.AddChild(aiStatsContainer);
         }
 
+        private static string GenerateBattleActionDescription(string label, BattleAction action)
+        {
+            var output = $"{label} battler '{action.Battler.Name}' ";
+
+            if (action.Attack != null)
+            {
+                output += $"executing attack '{action.Attack.Name}'";
+            }
+            else if (action.Tool != null)
+            {
+                output += $"using tool '{action.Tool.Name}'";
+            }
+            else
+            {
+                output += "no-op: unknown action";
+            }
+
+            return output;
+        }
+
         private ContainerBase CreateBattleStatsContainer(BattlerData battler)
         {
-            var font = _resourceService.Get<IFont>("font-default");
-
+            var font = _resourceService.Get<IFont>("font-default") ?? throw new Exception("Cannot find default font");
+            
             var container = new StackContainer
             {
                 Position = Vector2.Zero,
@@ -122,10 +153,15 @@ namespace Hyjynx.Battler.Scenes
 
             var attackButton = _utilityService.CreateButton("Attack", OnAttackButtonPressed);
             attackButton.Bind(b => b.IsEnabled = battler.Attacks.Sum(a => a.PowerPoints) > 0);
-
             container.AddChild(attackButton);
-            container.AddChild(_utilityService.CreateButton("Tools", OnToolsButtonPressed));
-            container.AddChild(_utilityService.CreateButton("Retreat", OnRetreatButtonPressed));
+
+            var toolsButton = _utilityService.CreateButton("Tools", OnToolsButtonPressed);
+            toolsButton.Bind(b => b.IsEnabled = battler.Tools.Sum(t => t.Count) > 0);
+            container.AddChild(toolsButton);
+
+            var retreatButton = _utilityService.CreateButton("Retreat", OnRetreatButtonPressed);
+            retreatButton.Bind(b => b.IsEnabled = CanTryRetreat());
+            container.AddChild(retreatButton);
 
             container.Bind(c => c.IsVisible = _battleState == BattleState.PlayerMainMenu);
 
@@ -152,6 +188,8 @@ namespace Hyjynx.Battler.Scenes
                 container.AddChild(button);
             }
 
+            container.AddChild(_utilityService.CreateButton("Back", (s, e) => SetBattleState(BattleState.PlayerMainMenu)));
+
             container.Bind(c => c.IsVisible = _battleState == BattleState.PlayerAttackMenu);
 
             return container;
@@ -166,26 +204,49 @@ namespace Hyjynx.Battler.Scenes
                 Position = new Vector2(300, 0)
             };
 
-            foreach (var attack in battler.Attacks)
+            foreach (var tool in battler.Tools)
             {
-                container.AddChild(_utilityService.CreateButton(attack.Name, (s, e) => OnPlayerAttackSelected(battler, attack)));
+                var button = _utilityService.CreateButton(tool.Name, (s, e) => OnPlayerToolSelected(battler, tool));
+
+                button.Bind(b => b.Text = $"{tool.Name} ({tool.Count})");
+
+                button.Bind(b =>
+                {
+                    if (tool.Count <= 0)
+                    {
+                        container.RemoveChild(b);
+                    }
+                });
+
+                container.AddChild(button);
             }
 
-            container.Bind(c => c.IsVisible = _battleState == BattleState.PlayerAttackMenu);
+            container.AddChild(_utilityService.CreateButton("Back", (s, e) => SetBattleState(BattleState.PlayerMainMenu)));
+
+            container.Bind(c => c.IsVisible = _battleState == BattleState.PlayerToolsMenu);
 
             return container;
         }
 
         private void OnPlayerAttackSelected(BattlerData battler, BattlerAttackData battlerAttack)
         {
-            _playerBattleAction = new BattleAction(battler, battlerAttack);
+            _playerBattleAction = new BattleAction(battler, battlerAttack, null);
 
             SetBattleState(BattleState.PlayerAttackSelected);
+        }
+
+        private void OnPlayerToolSelected(BattlerData battler, BattlerToolData battlerTool)
+        {
+            _playerBattleAction = new BattleAction(battler, null, battlerTool);
+
+            SetBattleState(BattleState.PlayerToolSelected);
         }
 
         private void SetBattleState(BattleState battleState)
         {
             _battleState = battleState;
+
+            BattleData battleData;
 
             switch (_battleState)
             {
@@ -195,78 +256,126 @@ namespace Hyjynx.Battler.Scenes
                     break;
 
                 case BattleState.ComputerAttackSelected:
-                    ProcessTurn();
+                // case BattleState.ComputerToolSelected:
+                    SetBattleState(BattleState.PlayerExecutingAction);
                     break;
 
-                case BattleState.PlayerExecutingAttackAction:
-                case BattleState.ComputerExecutingAttackAction:
-                    Thread.Sleep(1000);
+                case BattleState.PlayerExecutingAction:
+                    battleData = _resourceService.Get<BattleData>("battle-data") ?? throw new Exception("Missing battle data");
+
+                    ProcessTurn(
+                        _playerBattleAction ?? throw new Exception("No player battle action set"),
+                        battleData.PlayerBattler,
+                        battleData.ComputerBattler,
+                        BattleState.PlayerWins,
+                        BattleState.ComputerWins,
+                        BattleState.ComputerExecutingAction
+                    );
+                    break;
+
+                case BattleState.ComputerExecutingAction:
+                    battleData = _resourceService.Get<BattleData>("battle-data") ?? throw new Exception("Missing battle data");
+
+                    ProcessTurn(
+                        _computerBattleAction ?? throw new Exception("No computer battle action set"),
+                        battleData.ComputerBattler,
+                        battleData.PlayerBattler,
+                        BattleState.ComputerWins,
+                        BattleState.PlayerWins,
+                        BattleState.PlayerMainMenu
+                    );
                     break;
             }
         }
 
         private void GenerateComputerBattleAction()
         {
-            var battleData = _resourceService.Get<BattleData>("battle-data");
+            var battleData = _resourceService.Get<BattleData>("battle-data") ?? throw new Exception("Missing battle data");
 
             var selectedAttack = battleData.ComputerBattler.Attacks
                 .Where(a => a.PowerPoints > 0)
                 .OrderByDescending(a => a.Power)
                 .FirstOrDefault();
 
-            _computerBattleAction = new BattleAction(battleData.ComputerBattler, selectedAttack);
+            _computerBattleAction = new BattleAction(battleData.ComputerBattler, selectedAttack, null);
 
             SetBattleState(BattleState.ComputerAttackSelected);
         }
 
-        private void ProcessTurn()
+        private void ProcessTurn(BattleAction action, BattlerData source, BattlerData target, BattleState sourceWinState, BattleState targetWinState, BattleState nextState)
         {
-            SetBattleState(BattleState.PlayerExecutingAttackAction);
+            Thread.Sleep(1000);
 
-            var battleData = _resourceService.Get<BattleData>("battle-data");
-
-            battleData.ComputerBattler.Health -= _playerBattleAction.Attack.Power;
-
-            _playerBattleAction.Attack.PowerPoints -= 1;
-
-            if (battleData.ComputerBattler.Health <=0)
+            if (action == null)
             {
-                SetBattleState(BattleState.PlayerWins);
+                SetBattleState(BattleState.Exception);
                 return;
             }
 
-            SetBattleState(BattleState.ComputerExecutingAttackAction);
-
-            battleData.PlayerBattler.Health -= _computerBattleAction.Attack.Power;
-
-            _computerBattleAction.Attack.PowerPoints -= 1;
-
-            if (battleData.PlayerBattler.Health <= 0)
+            if (action.Attack != null)
             {
-                SetBattleState(BattleState.ComputerWins);
-                return;
+                target.Health -= action.Attack.Power;
+
+                action.Attack.PowerPoints -= 1;
+            }
+            else if (action.Tool != null)
+            {
+                // process tool
+                action.Tool.Count -= 1;
             }
 
-            SetBattleState(BattleState.PlayerMainMenu);
+            if (target.Health <= 0)
+            {
+                SetBattleState(sourceWinState);
+            }
+            else if (source.Health <= 0)
+            {
+                SetBattleState(targetWinState);
+            }
+            else
+            {
+                SetBattleState(nextState);
+            }
         }
 
-        private void OnAttackButtonPressed(object sender, EventArgs e)
+        private void OnAttackButtonPressed(object? sender, EventArgs e)
         {
             _battleState = BattleState.PlayerAttackMenu;
         }
 
-        private void OnToolsButtonPressed(object sender, EventArgs e)
+        private void OnToolsButtonPressed(object? sender, EventArgs e)
         {
             _battleState = BattleState.PlayerToolsMenu;
         }
 
-        private void OnRetreatButtonPressed(object sender, EventArgs e)
+        private void OnRetreatButtonPressed(object? sender, EventArgs e)
         {
-            _battleState = BattleState.PlayerRetreatSelected;
+            _canRetreat = Random.Shared.Next() % 2 == 0;
+
+            if (_canRetreat.Value)
+            {
+                _battleState = BattleState.PlayerRetreated;
+            }
+            else
+            {
+                _battleState = BattleState.PlayerMainMenu;
+            }
         }
 
-        private BattleAction _playerBattleAction;
-        private BattleAction _computerBattleAction;
+        private bool CanTryRetreat()
+        {
+            if (!_canRetreat.HasValue)
+            {
+                return true;
+            }
+
+            return _canRetreat.Value;
+        }
+
+        private bool? _canRetreat;
+
+        private BattleAction? _playerBattleAction;
+        private BattleAction? _computerBattleAction;
 
         private readonly IUtilityService _utilityService;
         private readonly InitializationArguments _initializationArguments;
@@ -278,14 +387,15 @@ namespace Hyjynx.Battler.Scenes
             PlayerAttackSelected,
             PlayerToolsMenu,
             PlayerToolSelected,
-            PlayerRetreatSelected,
+            PlayerRetreated,
             ComputerAttackSelected,
-            PlayerExecutingAttackAction,
-            ComputerExecutingAttackAction,
+            PlayerExecutingAction,
+            ComputerExecutingAction,
             PlayerWins,
-            ComputerWins
+            ComputerWins,
+            Exception
         }
 
-        private record BattleAction(BattlerData Battler, BattlerAttackData? Attack);
+        private record BattleAction(BattlerData Battler, BattlerAttackData? Attack, BattlerToolData? Tool);
     }
 }

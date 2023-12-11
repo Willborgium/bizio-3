@@ -7,10 +7,15 @@ namespace Hyjynx.Battler
 {
     public static class Package
     {
-        public static IServiceCollection AddBattlerServices(this IServiceCollection services) =>
-            services
+        public static IServiceCollection AddBattlerServices(this IServiceCollection services)
+        {
+            float ratio = .9f;
+            var width = 1920;
+            var height = 1080;
+            return services
                 .AddFirstScene<InitializationScene>()
                 .AddScene<BattleScene>()
-                .AddSingleton(new InitializationArguments(1920, 1080, true, Color.Green));
+                .AddSingleton(new InitializationArguments((int)(width * ratio), (int)(height * ratio), true, Color.Green));
+        }
     }
 }
