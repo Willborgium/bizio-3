@@ -17,12 +17,14 @@ namespace Hyjynx.Battler.Scenes
             IContentService contentService,
             ILoggingService loggingService,
             IUtilityService utilityService,
+            ISceneService sceneService,
             InitializationArguments initializationArguments
             )
             : base(resourceService, contentService, loggingService)
         {
             _utilityService = utilityService;
             _initializationArguments = initializationArguments;
+            _sceneService = sceneService;
             _battleState = BattleState.PlayerMainMenu;
         }
 
@@ -285,6 +287,13 @@ namespace Hyjynx.Battler.Scenes
                         BattleState.PlayerMainMenu
                     );
                     break;
+
+                case BattleState.PlayerWins:
+                case BattleState.ComputerWins:
+                case BattleState.PlayerRetreated:
+                    Thread.Sleep(1000);
+                    _sceneService.PopScene();
+                    break;
             }
         }
 
@@ -354,11 +363,11 @@ namespace Hyjynx.Battler.Scenes
 
             if (_canRetreat.Value)
             {
-                _battleState = BattleState.PlayerRetreated;
+                SetBattleState(BattleState.PlayerRetreated);
             }
             else
             {
-                _battleState = BattleState.PlayerMainMenu;
+                SetBattleState(BattleState.PlayerMainMenu);
             }
         }
 
@@ -379,6 +388,7 @@ namespace Hyjynx.Battler.Scenes
 
         private readonly IUtilityService _utilityService;
         private readonly InitializationArguments _initializationArguments;
+        private readonly ISceneService _sceneService;
 
         private enum BattleState
         {

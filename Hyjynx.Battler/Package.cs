@@ -14,6 +14,8 @@ namespace Hyjynx.Battler
             var height = 1080;
             return services
                 .AddFirstScene<InitializationScene>()
+                .AddScene<MainMenuScene>()
+                .AddScene<GameWorldScene>()
                 .AddScene<BattleScene>()
                 .AddSingleton(new InitializationArguments((int)(width * ratio), (int)(height * ratio), true, Color.Green));
         }
