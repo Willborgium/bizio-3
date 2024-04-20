@@ -1,24 +1,23 @@
-﻿using Hyjynx.Battler.Model;
-using Hyjynx.Core;
-using Hyjynx.Core.Services;
+﻿using Hyjynx.Core.Services;
 
-namespace Hyjynx.Battler.Scenes
+namespace Hyjynx.Core.Scenes
 {
-    internal class InitializationScene : Scene, IFirstScene
+    public class DefaultInitializationScene<TFirstScene> : Scene, IFirstScene
+        where TFirstScene : Scene
     {
-        public InitializationScene(
+        public DefaultInitializationScene(
             IResourceService resourceService,
             IContentService contentService,
             ILoggingService loggingService,
             IUtilityService utilityService,
             ISceneService sceneService,
-            Func<MainMenuScene> mainMenuSceneFactory
+            Func<TFirstScene> firstSceneFactory
             )
             : base(resourceService, contentService, loggingService)
         {
             _utilityService = utilityService;
             _sceneService = sceneService;
-            _mainMenuSceneFactory = mainMenuSceneFactory;
+            _firstSceneFactory = firstSceneFactory;
         }
 
         public override void LoadContent()
@@ -26,11 +25,11 @@ namespace Hyjynx.Battler.Scenes
             _utilityService.InitializeLogging(_contentService);
             _utilityService.TryAddDebuggingContainer(_visualRoot);
 
-            _sceneService.SwapScene(_mainMenuSceneFactory());
+            _sceneService.SwapScene(_firstSceneFactory());
         }
 
         private readonly IUtilityService _utilityService;
         private readonly ISceneService _sceneService;
-        private readonly Func<MainMenuScene> _mainMenuSceneFactory;
+        private readonly Func<TFirstScene> _firstSceneFactory;
     }
 }

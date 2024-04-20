@@ -387,8 +387,9 @@ namespace Hyjynx.Battler.Scenes
         private BattleAction? _computerBattleAction;
 
         private readonly IUtilityService _utilityService;
-        private readonly InitializationArguments _initializationArguments;
         private readonly ISceneService _sceneService;
+
+        private readonly InitializationArguments _initializationArguments;
 
         private enum BattleState
         {

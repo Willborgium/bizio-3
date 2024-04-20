@@ -1,7 +1,6 @@
-﻿using Hyjynx.Battler;
-using Hyjynx.Core;
+﻿using Hyjynx.Core;
+using Hyjynx.Tycoon;
 using Microsoft.Extensions.DependencyInjection;
-using System.Threading.Tasks;
 
 namespace Hyjynx.App.Xna
 {
@@ -12,7 +11,7 @@ namespace Hyjynx.App.Xna
             new ServiceCollection()
                 .AddCoreServices()
                 .AddDriverServices()
-                .AddBattlerServices()
+                .AddTycoonServices()
                 .RunDriver();
         }
     }

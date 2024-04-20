@@ -19,6 +19,8 @@ namespace Hyjynx.Core.Services
             _inputService = inputService;
             _loggingService = loggingService;
             _initializationArguments = initializationArguments;
+
+            DebuggingService.IsDebuggingEnabled = _initializationArguments.IsDebugModeEnabled;
         }
 
         public Button CreateButton(string text, int x, int y, int width, int height, EventHandler handler, EventArgs args = null)
@@ -51,8 +53,6 @@ namespace Hyjynx.Core.Services
 
         public void InitializeLogging(IContentService contentService)
         {
-            DebuggingService.IsDebuggingEnabled = _initializationArguments.IsDebugModeEnabled;
-
             var font = contentService.Load<IFont>("font-default");
             _resourceService.Set("font-default", font);
             DebuggingService.Font = font;

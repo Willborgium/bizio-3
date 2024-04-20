@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyjynx.Core", "..\Hyjynx.Co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyjynx.Bizio", "..\Hyjynx.Bizio\Hyjynx.Bizio.csproj", "{7B876E2C-2BE2-4D02-9181-38DDE10A8F3B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hyjynx.Battler", "..\Hyjynx.Battler\Hyjynx.Battler.csproj", "{12AF4E4D-4AB1-43FD-8F5E-16AD62B3E40D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyjynx.Battler", "..\Hyjynx.Battler\Hyjynx.Battler.csproj", "{12AF4E4D-4AB1-43FD-8F5E-16AD62B3E40D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hyjynx.Tycoon", "..\Hyjynx.Tycoon\Hyjynx.Tycoon.csproj", "{02C7F9D6-C630-4E3A-9D94-EE15F10B9D9F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{12AF4E4D-4AB1-43FD-8F5E-16AD62B3E40D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{12AF4E4D-4AB1-43FD-8F5E-16AD62B3E40D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{12AF4E4D-4AB1-43FD-8F5E-16AD62B3E40D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02C7F9D6-C630-4E3A-9D94-EE15F10B9D9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02C7F9D6-C630-4E3A-9D94-EE15F10B9D9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02C7F9D6-C630-4E3A-9D94-EE15F10B9D9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02C7F9D6-C630-4E3A-9D94-EE15F10B9D9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
