@@ -1,6 +1,7 @@
 ﻿using Hyjynx.Core;
 using Hyjynx.Core.Scenes;
 using Hyjynx.Core.Services;
+using Hyjynx.Tycoon.Models;
 
 namespace Hyjynx.Tycoon.Scenes
 {
@@ -13,6 +14,7 @@ namespace Hyjynx.Tycoon.Scenes
             IInputService inputService,
             IUtilityService utilityService,
             ISceneService sceneService,
+            Func<NewGameScene> newGameSceneFactory,
             InitializationArguments initializationArguments
             )
             : base(
@@ -25,11 +27,21 @@ namespace Hyjynx.Tycoon.Scenes
                 initializationArguments
                 )
         {
+            _newGameSceneFactory = newGameSceneFactory;
+        }
+
+        public override void LoadContent()
+        {
+            _loggingService.Info("Main menu loaded");
+
+            base.LoadContent();
         }
 
         protected override void StartNewGame(object? sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            _sceneService.PushScene(_newGameSceneFactory());
         }
+
+        private readonly Func<NewGameScene> _newGameSceneFactory;
     }
 }

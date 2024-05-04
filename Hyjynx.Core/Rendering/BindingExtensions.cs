@@ -24,7 +24,7 @@ namespace Hyjynx.Core.Rendering
         }
 
         public static T Bind<T>(this T source, Action<T> bind)
-            where T : UiComponent
+            where T : IBindable
         {
             source.Bindings.Add(Create(() => bind(source)));
 
@@ -32,7 +32,7 @@ namespace Hyjynx.Core.Rendering
         }
 
         public static TSource Bind<TSource, TValue>(this TSource source, Func<TValue> getter, Action<TSource, TValue> setter)
-            where TSource : UiComponent
+            where TSource : IBindable
         {
             source.Bindings.Add(Create(getter, x => setter(source, x)));
             return source;

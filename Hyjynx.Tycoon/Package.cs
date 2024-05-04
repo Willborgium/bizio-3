@@ -17,6 +17,8 @@ namespace Hyjynx.Tycoon
             return services
                 .AddFirstScene<DefaultInitializationScene<MainMenuScene>>()
                 .AddScene<MainMenuScene>()
+                .AddScene<NewGameScene>()
+                .AddScene<GameScene>()
                 .AddSingleton(new InitializationArguments((int)(width * ratio), (int)(height * ratio), true, Color.Beige));
         }
     }

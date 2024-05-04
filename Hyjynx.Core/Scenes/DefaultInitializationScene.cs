@@ -23,7 +23,6 @@ namespace Hyjynx.Core.Scenes
         public override void LoadContent()
         {
             _utilityService.InitializeLogging(_contentService);
-            _utilityService.TryAddDebuggingContainer(_visualRoot);
 
             _sceneService.SwapScene(_firstSceneFactory());
         }

@@ -86,7 +86,7 @@ namespace Hyjynx.Core.Rendering.Interface
                     break;
             }
 
-            renderer.Draw(_metadata.Spritesheet, Destination, source, Color.White);
+            renderer.Draw(_metadata.Spritesheet, Destination, source: source);
 
             var textDimensions = _metadata.Font.MeasureString(Text);
 

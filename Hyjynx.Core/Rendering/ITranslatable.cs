@@ -8,5 +8,9 @@ namespace Hyjynx.Core.Rendering
         IContainer? Parent { get; set; }
 
         Vector2 Position { get; set; }
+
+        Vector2 Translate(Vector2 offset);
+        Vector2 Translate(float x, float y);
+        Vector2 Translate(int x, int y);
     }
 }

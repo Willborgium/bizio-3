@@ -85,7 +85,10 @@ namespace Hyjynx.Core.Services
                 var debugContainer = DebuggingService.CreateDebugContainer(_loggingService, this, root, _initializationArguments);
                 debugContainer.Bind(c =>
                 {
-                    c.IsVisible = _inputService.GetKeyStates(Keys.LeftShift, Keys.OemTilde).All(k => k == KeyState.Down);
+                    if (_inputService.GetKeyStates(Keys.LeftShift, Keys.OemTilde).All(k => k == KeyState.Pressed))
+                    {
+                        c.IsVisible = !c.IsVisible;
+                    }
                 });
                 root.AddChild(debugContainer);
             }

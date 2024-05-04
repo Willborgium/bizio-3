@@ -3,20 +3,19 @@ using System.Numerics;
 
 namespace Hyjynx.Core.Rendering
 {
-    public abstract class UiComponent : IRenderable, IUpdateable, ITranslatable, IMeasurable
+    public abstract class UiComponent : BindingBase, IRenderable, IUpdateable, ITranslatable, IMeasurable
     {
         public bool IsVisible { get; set; }
         public int ZIndex { get; set; }
         public IContainer? Parent { get; set; }
         public Vector2 Position { get; set; }
         public string? Identifier { get; set; }
-        public ICollection<IUpdateable> Bindings { get; }
         public virtual Vector2 Dimensions { get => GetDimensions(); set => throw new InvalidOperationException("Dimensions are measured for this component and cannot be set directly."); }
 
         protected UiComponent()
+            : base()
         {
             IsVisible = true;
-            Bindings = new List<IUpdateable>();
         }
 
         public void Render(IRenderer renderer)
@@ -27,14 +26,6 @@ namespace Hyjynx.Core.Rendering
             }
 
             RenderInternal(renderer);
-        }
-
-        public virtual void Update()
-        {
-            foreach (var binding in Bindings)
-            {
-                binding.Update();
-            }
         }
 
         public void SetData(string key, object data) { _data[key] = data; }
@@ -48,6 +39,10 @@ namespace Hyjynx.Core.Rendering
 
             return (T)_data[key];
         }
+
+        public Vector2 Translate(Vector2 offset) => Position += offset;
+        public Vector2 Translate(float x, float y) => Position += new Vector2(x, y);
+        public Vector2 Translate(int x, int y) => Position += new Vector2(x, y);
 
         protected Rectangle Destination
         {
