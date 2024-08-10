@@ -1,5 +1,5 @@
 ﻿using Hyjynx.Core;
-using Hyjynx.Tycoon;
+using Hyjynx.Racer;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Hyjynx.App.Xna
@@ -11,7 +11,7 @@ namespace Hyjynx.App.Xna
             new ServiceCollection()
                 .AddCoreServices()
                 .AddDriverServices()
-                .AddTycoonServices()
+                .AddRacerServices()
                 .RunDriver();
         }
     }

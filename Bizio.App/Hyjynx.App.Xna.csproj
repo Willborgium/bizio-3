@@ -40,7 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Hyjynx.Core\Hyjynx.Core.csproj" />
-    <ProjectReference Include="..\Hyjynx.Tycoon\Hyjynx.Tycoon.csproj" />
+    <ProjectReference Include="..\Hyjynx.Racer\Hyjynx.Racer.csproj" />
   </ItemGroup>
   <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
     <Message Text="Restoring dotnet tools" Importance="High" />
