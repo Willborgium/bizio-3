@@ -1,6 +1,8 @@
 ﻿using Hyjynx.Core.Rendering;
 using Hyjynx.Core.Services;
 using Hyjynx.Racer.GameObjects;
+using Newtonsoft.Json;
+using System.Drawing;
 using System.Numerics;
 
 namespace Hyjynx.Racer.Scenes
@@ -24,6 +26,8 @@ namespace Hyjynx.Racer.Scenes
 
         public override void LoadContent()
         {
+            LoadTrack();
+
             var carTexture = _contentService.Load<ITexture2D>("car-test");
             var car = new Sprite(carTexture)
             {
@@ -32,7 +36,7 @@ namespace Hyjynx.Racer.Scenes
                 Position = new Vector2(500, 500)
             };
 
-            _visualRoot.AddChild(car);
+            _visualRoot += car;
 
             var playerVehicleData = new CalculatedVehicleData(.1f, 10f, .75f, 3f, .03f);
             var playerVehicle = new Vehicle(car, playerVehicleData)
@@ -40,9 +44,19 @@ namespace Hyjynx.Racer.Scenes
                 GetInputs = GetPlayerInputs
             };
 
-            var debugger = new VehicleDebugger(car, playerVehicle);
+            _visualRoot += new VehicleDebugger(car, playerVehicle, Color.Blue);
+        }
 
-            _visualRoot.Add(debugger);
+        private void LoadTrack()
+        {
+            string trackDataString;
+
+            using (var reader = new StreamReader("tracks.json"))
+            {
+                trackDataString = reader.ReadToEnd();
+            }
+
+            _trackData = JsonConvert.DeserializeObject<IEnumerable<TrackData>>(trackDataString);
         }
 
         public override void UnloadContent()
@@ -67,5 +81,11 @@ namespace Hyjynx.Racer.Scenes
         }
 
         private readonly IInputService _inputService;
+        private IEnumerable<TrackData>? _trackData;
+    }
+
+    public class TrackData
+    {
+        public Guid Id { get; set; }
     }
 }
