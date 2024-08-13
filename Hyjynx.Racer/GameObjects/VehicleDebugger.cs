@@ -25,6 +25,10 @@ namespace Hyjynx.Racer.GameObjects
             rotation.Bind(t => t.Text = $"{car.Rotation:0.000}");
 
             car.Bind(c => Position = c.Position - new Vector2(25, 200));
+
+            var position = new LabeledTextBox { Font = font, Color = color.Value, Label = "Position" };
+            AddChild(position);
+            position.Bind(t => t.Text = $"{car.Position.X:0.0},{car.Position.Y:0.0}");
         }
     }
 }

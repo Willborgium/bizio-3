@@ -1,5 +1,167 @@
 ﻿[
   {
-    "id": "a2a60ef6-8dc6-48d2-b8ff-77662a2ecc01"
+    "id": "a2a60ef6-8dc6-48d2-b8ff-77662a2ecc01",
+    "name": "Test Track",
+    "textureName": "test-track",
+    "textureRows": 3,
+    "textureColumns": 3,
+    "cells": [
+      [
+        {
+          "textureRow": 0,
+          "textureColumn": 0
+        },
+        {
+          "textureRow": 0,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 0,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 0,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 0,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 0,
+          "textureColumn": 1
+        }
+      ],
+      [
+        {
+          "textureRow": 2,
+          "textureColumn": 0
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 1
+        }
+      ],
+      [
+        {
+          "textureRow": 2,
+          "textureColumn": 0
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 1
+        }
+      ],
+      [
+        {
+          "textureRow": 2,
+          "textureColumn": 0
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 1
+        }
+      ],
+      [
+        {
+          "textureRow": 2,
+          "textureColumn": 0
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 2,
+          "textureColumn": 1
+        }
+      ],
+      [
+        {
+          "textureRow": 1,
+          "textureColumn": 0
+        },
+        {
+          "textureRow": 1,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 1,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 1,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 1,
+          "textureColumn": 2
+        },
+        {
+          "textureRow": 1,
+          "textureColumn": 1
+        }
+      ]
+    ]
   }
 ]

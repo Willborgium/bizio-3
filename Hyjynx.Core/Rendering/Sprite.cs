@@ -48,10 +48,20 @@ namespace Hyjynx.Core.Rendering
             Dimensions = new Vector2(texture.Width, texture.Height);
         }
 
+        public Sprite(ITexture2D texture, Rectangle source)
+        {
+            _texture = texture;
+            Scale = Vector2.One;
+            Dimensions = new Vector2(texture.Width, texture.Height);
+            _source = source;
+        }
+
         public void Render(IRenderer renderer)
         {
+            var position = Parent?.GetChildAbsolutePosition(this) ?? Position;
+
             DebuggingService.DrawRectangle(renderer, Position, Dimensions * Scale);
-            renderer.Draw(_texture, Position, Color.White, null, Rotation, _origin, Scale);
+            renderer.Draw(_texture, position, Color.White, _source, Rotation, _origin, Scale);
         }
 
         public Vector2 Translate(Vector2 offset) => Position += offset;
@@ -76,6 +86,8 @@ namespace Hyjynx.Core.Rendering
 
         private Vector2 _origin;
         private RotationAnchor _anchor;
+
         private readonly ITexture2D _texture;
+        private readonly Rectangle? _source;
     }
 }
