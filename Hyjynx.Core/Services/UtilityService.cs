@@ -51,6 +51,11 @@ namespace Hyjynx.Core.Services
             return CreateButton(text, 0, 0, 300, 50, handler, args);
         }
 
+        public Button CreateButton(string text, int width, EventHandler handler, EventArgs args = null)
+        {
+            return CreateButton(text, 0, 0, width, 50, handler, args);
+        }
+
         public void InitializeLogging(IContentService contentService)
         {
             var font = contentService.Load<IFont>("font-default");

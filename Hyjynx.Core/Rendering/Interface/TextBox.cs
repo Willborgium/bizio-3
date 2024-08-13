@@ -11,12 +11,19 @@ namespace Hyjynx.Core.Rendering.Interface
 
         public string Text { get; set; }
 
+        public Vector2 MinimumDimensions { get; set; } = Vector2.Zero;
+
         public TextBox()
             : base()
         {
         }
 
-        protected override Vector2 GetDimensions() => Font?.MeasureString(Text ?? string.Empty) ?? Vector2.Zero;
+        protected override Vector2 GetDimensions()
+        {
+            var textDimensions = Font?.MeasureString(Text ?? string.Empty) ?? Vector2.Zero;
+
+            return new Vector2(Math.Max(textDimensions.X, MinimumDimensions.X), Math.Max(textDimensions.Y, MinimumDimensions.Y));
+        }
 
         protected override void RenderInternal(IRenderer renderer)
         {

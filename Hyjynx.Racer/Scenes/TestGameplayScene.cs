@@ -1,11 +1,14 @@
 ﻿using Hyjynx.Core;
+using Hyjynx.Core.Debugging;
 using Hyjynx.Core.Rendering;
 using Hyjynx.Core.Rendering.Interface;
 using Hyjynx.Core.Services;
 using Hyjynx.Racer.GameObjects;
+using Hyjynx.Racer.Models;
 using Newtonsoft.Json;
 using System.Drawing;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace Hyjynx.Racer.Scenes
 {
@@ -16,6 +19,7 @@ namespace Hyjynx.Racer.Scenes
             IContentService contentService,
             ILoggingService loggingService,
             IInputService inputService,
+            IUtilityService utilityService,
             InitializationArguments initializationArguments
             )
             : base(
@@ -25,6 +29,7 @@ namespace Hyjynx.Racer.Scenes
                   )
         {
             _inputService = inputService;
+            _utilityService = utilityService;
             _initializationArguments = initializationArguments;
         }
 
@@ -48,14 +53,67 @@ namespace Hyjynx.Racer.Scenes
 
             track.Bind(t => UpdateViewport(t, car));
 
-            var playerVehicleData = new CalculatedVehicleData(.2f, 20f, .75f, 3f, .06f);
+            var playerVehicleData = new DynamicVehicleData(
+                () => _acceleration,
+                () => _topSpeed,
+                () => _topReverseSpeedFactor,
+                () => _decelarationFactor,
+                () => _turnSpeed
+            );
+
             var playerVehicle = new Vehicle(car, playerVehicleData)
             {
                 GetInputs = GetPlayerInputs
             };
 
             _visualRoot += new VehicleDebugger(car, playerVehicle, Color.Blue);
+
+            IContainer vehicleDataControllerContainer = new StackContainer
+            {
+                Direction = LayoutDirection.Vertical,
+                Padding = new Vector4(5)
+            };
+
+            vehicleDataControllerContainer += AddVehicleDataControllerButtons("Acceleration", () => _acceleration, x => _acceleration = x, .01f);
+            vehicleDataControllerContainer += AddVehicleDataControllerButtons("Top Speed", () => _topSpeed, x => _topSpeed = x, 1f);
+            vehicleDataControllerContainer += AddVehicleDataControllerButtons("Reverse Factor", () => _topReverseSpeedFactor, x => _topReverseSpeedFactor = x, .05f);
+            vehicleDataControllerContainer += AddVehicleDataControllerButtons("Decelaration Factor", () => _decelarationFactor, x => _decelarationFactor = x, .25f);
+            vehicleDataControllerContainer += AddVehicleDataControllerButtons("Turn Speed", () => _turnSpeed, x => _turnSpeed = x, .01f);
+
+            _visualRoot += vehicleDataControllerContainer;
         }
+
+        private IContainer AddVehicleDataControllerButtons(string name, Func<float> getter, Action<float> setter, float increment)
+        {
+            IContainer container = new StackContainer
+            {
+                Direction = LayoutDirection.Horizontal,
+                Padding = new Vector4(5)
+            };
+
+            container += new TextBox { Font = DebuggingService.Font, MinimumDimensions = new Vector2(200, 50), Color = Color.Black, Text = name };
+            container += _utilityService.CreateButton("-", 50, ChangeValue(getter, setter, -increment));
+            container += _utilityService.CreateButton("+", 50, ChangeValue(getter, setter, increment));
+            var value = new TextBox { Font = DebuggingService.Font, Color = Color.Black };
+            value.Bind(v => v.Text = $"{getter():0.000}");
+            container += value;
+
+            return container;
+        }
+
+        private static EventHandler ChangeValue(Func<float> getter, Action<float> setter, float increment)
+        {
+            return (s, e) =>
+            {
+                setter(getter() + increment);
+            };
+        }
+
+        private float _acceleration = .1f;
+        private float _topSpeed = 10f;
+        private float _topReverseSpeedFactor = .75f;
+        private float _decelarationFactor = 1.5f;
+        private float _turnSpeed = .03f;
 
         private void UpdateViewport(VisualContainer track, Sprite car)
         {
@@ -181,29 +239,10 @@ namespace Hyjynx.Racer.Scenes
             };
         }
 
-        private readonly IInputService _inputService;
-        private readonly InitializationArguments _initializationArguments;
         private IEnumerable<TrackData>? _trackData;
-    }
 
-    public class TrackData
-    {
-        public Guid Id { get; set; }
-
-        public string Name { get; set; }
-
-        public string TextureName { get; set; }
-
-        public int TextureRows { get; set; }
-
-        public int TextureColumns { get; set; }
-
-        public TrackCell[,] Cells { get; set; }
-    }
-
-    public class TrackCell
-    {
-        public int TextureRow { get; set; }
-        public int TextureColumn { get; set; }
+        private readonly IInputService _inputService;
+        private readonly IUtilityService _utilityService;
+        private readonly InitializationArguments _initializationArguments;
     }
 }
