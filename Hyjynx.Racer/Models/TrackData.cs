@@ -1,6 +1,6 @@
 ﻿namespace Hyjynx.Racer.Models
 {
-    public class TrackData
+    public class TrackData : ITrackData
     {
         public Guid Id { get; set; }
 

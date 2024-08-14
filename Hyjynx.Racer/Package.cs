@@ -1,5 +1,6 @@
 ﻿using Hyjynx.Core;
 using Hyjynx.Racer.Scenes;
+using Hyjynx.Racer.Services;
 using Microsoft.Extensions.DependencyInjection;
 using System.Drawing;
 
@@ -13,6 +14,7 @@ namespace Hyjynx.Racer
                 .AddScene<MainMenuScene>()
                 .AddScene<SetupNewGameScene>()
                 .AddScene<TestGameplayScene>()
+                .AddSingleton<ITrackService, TrackService>()
                 .AddSingleton(new InitializationArguments(1920, 1080, true, Color.Orange));
     }
 }
