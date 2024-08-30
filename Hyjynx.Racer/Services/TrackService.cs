@@ -8,6 +8,11 @@ using System.Numerics;
 
 namespace Hyjynx.Racer.Services
 {
+    public class Track : VisualContainer
+    {
+
+    }
+
     public class TrackService : ITrackService
     {
         public IEnumerable<ITrackData> TrackMetadata
@@ -29,7 +34,7 @@ namespace Hyjynx.Racer.Services
             _contentService = contentService;
         }
 
-        public VisualContainer CreateTrackContainer(ITrackData trackMetadata)
+        public Track CreateTrack(ITrackData trackMetadata)
         {
             var trackData = TrackData.First(td => td.Id == trackMetadata.Id);
 
@@ -40,7 +45,7 @@ namespace Hyjynx.Racer.Services
 
             var trackTextureSources = CreateTrackTextureSources(cellWidth, cellHeight, trackData);
 
-            var trackContainer = new VisualContainer();
+            var trackContainer = new Track();
 
             var rowCount = trackData.Cells.GetLength(0);
             var columnCount = trackData.Cells.GetLength(1);
@@ -60,6 +65,8 @@ namespace Hyjynx.Racer.Services
 
                     trackContainer.AddChild(new Sprite(trackTexture, source)
                     {
+                        Anchor = RotationAnchor.Center,
+                        Identifier = $"cell-{column}-{row}",
                         Position = new Vector2(x, y),
                         Scale = new Vector2(scale)
                     });

@@ -44,24 +44,69 @@ namespace Hyjynx.Core.Debugging
 
         public static void Set(DebugFlag flag, bool isEnabled) => _flags[flag] = isEnabled;
 
-        public static void DrawRectangle(IRenderer renderer, Vector2 position, Vector2 dimensions)
+        public static void Identify<T>(IRenderer renderer, T target, Vector2? position = null)
+            where T : IIdentifiable, ITranslatable
+        {
+            if (!IsEnabled(DebugFlag.IdentifiableText) || PixelTexture == null)
+            {
+                return;
+            }
+
+            var id = target.Identifier ?? "Unknown";
+            var p = position ?? target.Position;
+
+            renderer.DrawText(Font, id, p, Color.White);
+        }
+
+        private const float Thickness = 2;
+        private static Vector2 BorderThickness = new(Thickness);
+
+        private static Vector2 RotateAroundOrigin(Vector2 position, Vector2 origin, float rotation)
+        {
+            // Translate the position to the origin
+            Vector2 translatedPosition = position - origin;
+
+            // Apply the rotation matrix
+            float cosTheta = (float)Math.Cos(rotation);
+            float sinTheta = (float)Math.Sin(rotation);
+
+            float rotatedX = translatedPosition.X * cosTheta - translatedPosition.Y * sinTheta;
+            float rotatedY = translatedPosition.X * sinTheta + translatedPosition.Y * cosTheta;
+
+            // Translate the rotated position back to the original origin
+            Vector2 rotatedPosition = new Vector2(rotatedX, rotatedY) + origin;
+
+            return rotatedPosition;
+        }
+
+        public static void DrawRectangle(IRenderer renderer, Vector2 position, Vector2 dimensions, float rotation = 0)
         {
             if (!IsEnabled(DebugFlag.RenderableOutlines) || PixelTexture == null)
             {
                 return;
             }
 
-            var thickness = 2;
+            // Center
+            renderer.Draw(PixelTexture, position, Color.Black, null, 0, null, BorderThickness);
 
-            var top = new Rectangle((int)position.X, (int)position.Y, (int)dimensions.X, thickness);
-            var bottom = new Rectangle((int)position.X, (int)(position.Y + dimensions.Y - thickness), (int)dimensions.X, thickness);
-            var left = new Rectangle((int)position.X, (int)position.Y, thickness, (int)dimensions.Y);
-            var right = new Rectangle((int)(position.X + dimensions.X - thickness), (int)position.Y, thickness, (int)dimensions.Y);
+            var hScale = new Vector2(dimensions.X, BorderThickness.Y);
 
-            renderer.Draw(PixelTexture, top, Color.White);
-            renderer.Draw(PixelTexture, bottom, Color.White);
-            renderer.Draw(PixelTexture, left, Color.White);
-            renderer.Draw(PixelTexture, right, Color.White);
+            var topPosition = -dimensions / 2;
+            var topOffset = RotateAroundOrigin(topPosition, Vector2.Zero, rotation);
+            renderer.Draw(PixelTexture, position + topOffset, Color.Red, null, rotation, null, hScale);
+
+            var bottomPosition = new Vector2(-dimensions.X / 2, dimensions.Y / 2);
+            var bottomOffset = RotateAroundOrigin(bottomPosition, Vector2.Zero, rotation);
+            renderer.Draw(PixelTexture, position + bottomOffset, Color.Blue, null, rotation, null, hScale);
+
+            var vScale = new Vector2(BorderThickness.X, dimensions.Y + Thickness);
+
+            var leftOffset = RotateAroundOrigin(topPosition, Vector2.Zero, rotation);
+            renderer.Draw(PixelTexture, position + leftOffset, Color.Green, null, rotation, null, vScale);
+
+            var rightPosition = new Vector2(dimensions.X / 2, -dimensions.Y / 2);
+            var rightOffset = RotateAroundOrigin(rightPosition, Vector2.Zero, rotation);
+            renderer.Draw(PixelTexture, position + rightOffset, Color.Purple, null, rotation, null, vScale);
         }
 
         public static void DrawEmptyContainerText(IRenderer renderer, Vector2 position)

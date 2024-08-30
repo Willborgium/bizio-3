@@ -7,6 +7,6 @@ namespace Hyjynx.Racer.Services
     {
         IEnumerable<ITrackData> TrackMetadata { get; }
 
-        VisualContainer CreateTrackContainer(ITrackData trackMetadata);
+        Track CreateTrack(ITrackData trackMetadata);
     }
 }

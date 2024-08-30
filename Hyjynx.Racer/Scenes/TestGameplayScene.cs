@@ -1,4 +1,5 @@
 ﻿using Hyjynx.Core;
+using Hyjynx.Core.Debugging;
 using Hyjynx.Core.Rendering;
 using Hyjynx.Core.Rendering.Interface;
 using Hyjynx.Core.Services;
@@ -35,6 +36,8 @@ namespace Hyjynx.Racer.Scenes
 
         public override void LoadContent()
         {
+            _visualRoot += DebuggingService.CreateDebugContainer(_loggingService, _utilityService, _visualRoot, _initializationArguments);
+
             // CAR
             var carTexture = _contentService.Load<ITexture2D>("car-test");
             var car = new Sprite(carTexture)
@@ -42,7 +45,8 @@ namespace Hyjynx.Racer.Scenes
                 Anchor = RotationAnchor.Center,
                 Scale = new Vector2(0.5f, 0.5f),
                 Position = new Vector2(500, 500),
-                ZIndex = 1
+                ZIndex = 1,
+                Identifier = "car"
             };
 
             _visualRoot += car;
@@ -84,13 +88,38 @@ namespace Hyjynx.Racer.Scenes
             };
 
             _visualRoot += new VehicleDebugger(car, playerVehicle, Color.Blue);
+
+            car.Bind(CheckForCollision);
+        }
+
+        private void CheckForCollision(Sprite sprite)
+        {
+            var mouse = _inputService.GetMouseState();
+
+            if (sprite.Contains(mouse.Position))
+            {
+                _loggingService.Info("Mouse is in");
+            }
         }
 
         private void SelectTrack(IRenderable container, ITrackData track, Sprite car)
         {
-            var trackContainer = _trackService.CreateTrackContainer(track);
+            var trackContainer = _trackService.CreateTrack(track);
 
             _visualRoot += trackContainer;
+
+            foreach (var child in trackContainer)
+            {
+                if (child is not Sprite s)
+                {
+                    continue;
+                }
+
+                s.Bind(s =>
+                    {
+                        s.IsVisible = car.Intersects(s);
+                    });
+            }
 
             trackContainer.Bind(t => UpdateViewport(t, car));
 

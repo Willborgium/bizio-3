@@ -28,10 +28,11 @@ namespace Hyjynx.Core.Debugging
 
             AddChild(root);
 
-            root.AddChild(_utilityService.CreateButton("Logger", ToggleDebugInfo));
-            root.AddChild(_utilityService.CreateButton("Snapshot", LogSnapshot));
-            root.AddChild(_utilityService.CreateButton("Outlines", ToggleDebuggingOutlines));
-            root.AddChild(_utilityService.CreateButton("Visuals", LogVisuals));
+            root.AddChild(_utilityService.CreateButton("Logger", 100, ToggleDebugInfo));
+            root.AddChild(_utilityService.CreateButton("Snapshot", 100, LogSnapshot));
+            root.AddChild(_utilityService.CreateButton("Outlines", 100, GetToggler(DebugFlag.RenderableOutlines)));
+            root.AddChild(_utilityService.CreateButton("Identities", 100, GetToggler(DebugFlag.IdentifiableText)));
+            root.AddChild(_utilityService.CreateButton("Visuals", 100, LogVisuals));
 
             var x = screenWidth - root.Dimensions.X;
             var y = screenHeight - root.Dimensions.Y;
@@ -61,10 +62,13 @@ namespace Hyjynx.Core.Debugging
             _loggingService.Info("[END SNAPSHOT]");
         }
 
-        private void ToggleDebuggingOutlines(object sender, EventArgs e)
+        private static EventHandler GetToggler(DebugFlag flag)
         {
-            var isEnabled = DebuggingService.IsEnabled(DebugFlag.RenderableOutlines);
-            DebuggingService.Set(DebugFlag.RenderableOutlines, !isEnabled);
+            return (s, e) =>
+            {
+                var isEnabled = DebuggingService.IsEnabled(flag);
+                DebuggingService.Set(flag, !isEnabled);
+            };
         }
 
         private readonly ILoggingService _loggingService;

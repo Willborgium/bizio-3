@@ -1,5 +1,6 @@
 ﻿using Hyjynx.Core.Services;
 using Hyjynx.Core.Scenes;
+using Hyjynx.Core.Debugging;
 
 namespace Hyjynx.Racer.Scenes
 {
@@ -26,6 +27,8 @@ namespace Hyjynx.Racer.Scenes
 
         public override void LoadContent()
         {
+            DebuggingService.IsDebuggingEnabled = true;
+
             base.LoadContent();
         }
     }

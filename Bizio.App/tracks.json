@@ -5,6 +5,12 @@
     "textureName": "test-track",
     "textureRows": 3,
     "textureColumns": 3,
+    "boundaries": [
+      {
+        "row": 0,
+        "column": 0
+      }
+    ],
     "cells": [
       [
         {

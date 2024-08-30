@@ -8,13 +8,19 @@ namespace Hyjynx.Racer
 {
     public static class Package
     {
-        public static IServiceCollection AddRacerServices(this IServiceCollection services) =>
-            services
+        public static IServiceCollection AddRacerServices(this IServiceCollection services)
+        {
+            var width = 1920;
+            var height = 1080;
+            var scale = .9f;
+
+            return services
                 .AddFirstScene<InitializationScene>()
                 .AddScene<MainMenuScene>()
                 .AddScene<SetupNewGameScene>()
                 .AddScene<TestGameplayScene>()
                 .AddSingleton<ITrackService, TrackService>()
-                .AddSingleton(new InitializationArguments(1920, 1080, true, Color.Orange));
+                .AddSingleton(new InitializationArguments((int)(width * scale), (int)(height * scale), true, Color.Orange));
+        }
     }
 }
