@@ -24,7 +24,7 @@ namespace Hyjynx.Core.Rendering.Interface
 
         protected override void RenderInternal(IRenderer renderer)
         {
-            var position = Parent?.GetChildAbsolutePosition(this) ?? Position;
+            var position = Parent?.GetChildAbsolutePosition(this) ?? Offset;
 
             renderer.DrawText(Font, Label ?? string.Empty, position, Color);
 

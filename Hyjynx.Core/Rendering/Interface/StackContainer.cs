@@ -12,7 +12,7 @@ namespace Hyjynx.Core.Rendering.Interface
         {
             var position = GetCurrentPosition();
 
-            position += new Vector2(Padding.X, Padding.Y) + child.Position;
+            position += new Vector2(Padding.X, Padding.Y) + child.Offset;
 
             foreach (var renderable in _renderables)
             {

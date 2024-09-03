@@ -54,7 +54,7 @@ namespace Hyjynx.Core.Scenes
             var x = (_initializationArguments.ScreenWidth - menuScrollContainer.Dimensions.X) / 2;
             var y = (_initializationArguments.ScreenHeight - menuScrollContainer.Dimensions.Y) / 2;
 
-            menuScrollContainer.Position = new Vector2(x - menu.Dimensions.X / 2, y - menu.Dimensions.Y / 2);
+            menuScrollContainer.Offset = new Vector2(x - menu.Dimensions.X / 2, y - menu.Dimensions.Y / 2);
 
             _visualRoot.AddChild(menuScrollContainer);
         }

@@ -242,7 +242,7 @@ namespace Hyjynx.Core.Rendering.Interface
 
         protected Vector2 GetCurrentPosition()
         {
-            return Parent?.GetChildAbsolutePosition(this) ?? Position;
+            return Parent?.GetChildAbsolutePosition(this) ?? Offset;
         }
 
         protected override Vector2 GetDimensions() => _dimensions;

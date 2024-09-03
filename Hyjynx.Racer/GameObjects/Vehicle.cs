@@ -62,8 +62,8 @@ namespace Hyjynx.Racer.GameObjects
             }
 
             if (acceleration == 0 &&
-                Velocity < -0.11f &&
-                Velocity > 0.11f)
+                Velocity > -_vehicleData.Acceleration &&
+                Velocity < _vehicleData.Acceleration)
             {
                 Velocity = 0f;
             }

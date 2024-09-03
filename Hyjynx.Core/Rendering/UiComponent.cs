@@ -8,7 +8,8 @@ namespace Hyjynx.Core.Rendering
         public bool IsVisible { get; set; }
         public int ZIndex { get; set; }
         public IContainer? Parent { get; set; }
-        public Vector2 Position { get; set; }
+        public Vector2 Offset { get; set; }
+        public Vector2 Position => Parent?.GetChildAbsolutePosition(this) ?? Offset;
         public string? Identifier { get; set; }
         public virtual Vector2 Dimensions { get => GetDimensions(); set => throw new InvalidOperationException("Dimensions are measured for this component and cannot be set directly."); }
 
@@ -40,17 +41,15 @@ namespace Hyjynx.Core.Rendering
             return (T)_data[key];
         }
 
-        public Vector2 Translate(Vector2 offset) => Position += offset;
-        public Vector2 Translate(float x, float y) => Position += new Vector2(x, y);
-        public Vector2 Translate(int x, int y) => Position += new Vector2(x, y);
+        public Vector2 Translate(Vector2 offset) => Offset += offset;
+        public Vector2 Translate(float x, float y) => Offset += new Vector2(x, y);
+        public Vector2 Translate(int x, int y) => Offset += new Vector2(x, y);
 
         protected Rectangle Destination
         {
             get
             {
-                var position = Parent?.GetChildAbsolutePosition(this) ?? Position;
-
-                return new Rectangle((int)position.X, (int)position.Y, (int)Dimensions.X, (int)Dimensions.Y);
+                return new Rectangle((int)Position.X, (int)Position.Y, (int)Dimensions.X, (int)Dimensions.Y);
             }
         }
 

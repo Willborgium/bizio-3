@@ -21,7 +21,7 @@ namespace Hyjynx.Racer.Services
             {
                 TryLoadTrackData();
 
-                return _trackMetadata ?? Enumerable.Empty<ITrackData>();
+                return _trackMetadata ?? [];
             }
         }
 
@@ -63,13 +63,15 @@ namespace Hyjynx.Racer.Services
 
                     var source = trackTextureSources[cellData.TextureRow, cellData.TextureColumn];
 
-                    trackContainer.AddChild(new Sprite(trackTexture, source)
+                    var cell = new Sprite(trackTexture, source)
                     {
                         Anchor = RotationAnchor.Center,
                         Identifier = $"cell-{column}-{row}",
-                        Position = new Vector2(x, y),
+                        Offset = new Vector2(x, y),
                         Scale = new Vector2(scale)
-                    });
+                    };
+
+                    trackContainer.AddChild(cell);
                 }
             }
 
@@ -121,7 +123,6 @@ namespace Hyjynx.Racer.Services
 
             _trackData = LoadTrackData();
             _trackMetadata = _trackData.Cast<ITrackData>();
-
         }
 
         private static IEnumerable<TrackData> LoadTrackData()

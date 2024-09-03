@@ -6,7 +6,7 @@ namespace Hyjynx.Core.Rendering.Interface
     {
         public override Vector2 GetChildAbsolutePosition(ITranslatable child)
         {
-            return GetCurrentPosition() + child.Position;
+            return GetCurrentPosition() + child.Offset;
         }
     }
 }

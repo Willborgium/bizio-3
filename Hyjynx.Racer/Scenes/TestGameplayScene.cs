@@ -38,18 +38,48 @@ namespace Hyjynx.Racer.Scenes
         {
             _visualRoot += DebuggingService.CreateDebugContainer(_loggingService, _utilityService, _visualRoot, _initializationArguments);
 
+            var tb = new TextBox { Font = DebuggingService.Font, Color = Color.Red, ZIndex = 5 };
+            _visualRoot += tb;
+            tb.Bind(t =>
+            {
+                var m = _inputService.GetMouseState();
+                t.Offset = new Vector2(m.Position.X, m.Position.Y);
+                t.Text = $"{m.Position}";
+            });
+
             // CAR
             var carTexture = _contentService.Load<ITexture2D>("car-test");
             var car = new Sprite(carTexture)
             {
                 Anchor = RotationAnchor.Center,
                 Scale = new Vector2(0.5f, 0.5f),
-                Position = new Vector2(500, 500),
+                Offset = new Vector2(500, 500),
+                Rotation = .5f,
                 ZIndex = 1,
-                Identifier = "car"
+                Identifier = "car",
+                EnableDebugger = true
             };
 
             _visualRoot += car;
+
+            var vehicleDataController = new VehicleDataController(_utilityService);
+            _visualRoot += vehicleDataController;
+
+            var playerVehicleData = new DynamicVehicleData(
+                () => vehicleDataController.Acceleration,
+                () => vehicleDataController.TopSpeed,
+                () => vehicleDataController.TopReverseSpeedFactor,
+                () => vehicleDataController.DecelarationFactor,
+                () => vehicleDataController.TurnSpeed
+            );
+
+
+            var playerVehicle = new Vehicle(car, playerVehicleData)
+            {
+                GetInputs = GetPlayerInputs
+            };
+
+            _visualRoot += new VehicleDebugger(car, playerVehicle, Color.Blue);
 
             // TRACK SELECTOR
             var tracks = _trackService.TrackMetadata;
@@ -68,38 +98,7 @@ namespace Hyjynx.Racer.Scenes
                 trackSelectorContainer.Add(_utilityService.CreateButton(track.Name, (s, e) => SelectTrack(trackSelectorContainer, track, car)));
             }
 
-            // VEHICLE, DATA CONTROLLER, DEBUGGER
-            var vehicleDataController = new VehicleDataController(_utilityService);
-            _visualRoot += vehicleDataController;
             vehicleDataController.Bind(c => c.IsVisible = !trackSelectorContainer.IsVisible);
-
-            var playerVehicleData = new DynamicVehicleData(
-                () => vehicleDataController.Acceleration,
-                () => vehicleDataController.TopSpeed,
-                () => vehicleDataController.TopReverseSpeedFactor,
-                () => vehicleDataController.DecelarationFactor,
-                () => vehicleDataController.TurnSpeed
-            );
-
-            
-            var playerVehicle = new Vehicle(car, playerVehicleData)
-            {
-                GetInputs = GetPlayerInputs
-            };
-
-            _visualRoot += new VehicleDebugger(car, playerVehicle, Color.Blue);
-
-            car.Bind(CheckForCollision);
-        }
-
-        private void CheckForCollision(Sprite sprite)
-        {
-            var mouse = _inputService.GetMouseState();
-
-            if (sprite.Contains(mouse.Position))
-            {
-                _loggingService.Info("Mouse is in");
-            }
         }
 
         private void SelectTrack(IRenderable container, ITrackData track, Sprite car)
@@ -107,19 +106,6 @@ namespace Hyjynx.Racer.Scenes
             var trackContainer = _trackService.CreateTrack(track);
 
             _visualRoot += trackContainer;
-
-            foreach (var child in trackContainer)
-            {
-                if (child is not Sprite s)
-                {
-                    continue;
-                }
-
-                s.Bind(s =>
-                    {
-                        s.IsVisible = car.Intersects(s);
-                    });
-            }
 
             trackContainer.Bind(t => UpdateViewport(t, car));
 
@@ -139,22 +125,22 @@ namespace Hyjynx.Racer.Scenes
             var topBound = boundaryThickness;
             var bottomBound = _initializationArguments.ScreenHeight - boundaryThickness;
 
-            if (car.Position.X < leftBound)
+            if (car.Offset.X < leftBound)
             {
-                xOffset = leftBound - car.Position.X;
+                xOffset = leftBound - car.Offset.X;
             }
-            else if (car.Position.X > rightBound)
+            else if (car.Offset.X > rightBound)
             {
-                xOffset = rightBound - car.Position.X;
+                xOffset = rightBound - car.Offset.X;
             }
 
-            if (car.Position.Y < topBound)
+            if (car.Offset.Y < topBound)
             {
-                yOffset = topBound - car.Position.Y;
+                yOffset = topBound - car.Offset.Y;
             }
-            else if (car.Position.Y > bottomBound)
+            else if (car.Offset.Y > bottomBound)
             {
-                yOffset = bottomBound - car.Position.Y;
+                yOffset = bottomBound - car.Offset.Y;
             }
 
             car.Translate(xOffset, yOffset);

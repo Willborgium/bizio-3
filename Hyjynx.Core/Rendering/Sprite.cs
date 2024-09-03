@@ -4,19 +4,38 @@ using System.Numerics;
 
 namespace Hyjynx.Core.Rendering
 {
-    public class Sprite : BindingBase, IRenderable, ITranslatable, IMeasurable, IRotatable
+    public class Sprite : BindingBase, IRenderable, ITranslatable, IMeasurable, IRotatable, IBounded
     {
         public bool IsVisible { get; set; }
         public int ZIndex { get; set; }
         public string? Identifier { get; set; }
         public IContainer? Parent { get; set; }
-        public Vector2 Position { get; set; }
+        public Vector2 Offset { get; set; }
 
-        public Vector2 Dimensions { get; set; }
+        public Vector2 Position => Parent?.GetChildAbsolutePosition(this) ?? Offset;
 
-        public Vector2 Scale { get; set; }
+        public Vector2 Dimensions
+        {
+            get => _dimensions;
+            set
+            {
+                _dimensions = value;
+                UpdateOrigin();
+            }
+        }
+
+        public Vector2 Scale
+        {
+            get => _scale;
+            set
+            {
+                _scale = value;
+                UpdateOrigin();
+            }
+        }
 
         public float Rotation { get; set; }
+
         public RotationAnchor Anchor
         {
             get => _anchor;
@@ -29,7 +48,7 @@ namespace Hyjynx.Core.Rendering
 
         public Vector2 Origin
         {
-            get => _origin;
+            get => _absoluteOrigin;
             set
             {
                 if (Anchor != RotationAnchor.Custom)
@@ -37,9 +56,11 @@ namespace Hyjynx.Core.Rendering
                     throw new InvalidOperationException($"Cannot explicitly set origin with Anchor set to '{Anchor}'. Please use type Custom.");
                 }
 
-                _origin = value;
+                _absoluteOrigin = value;
             }
         }
+
+        public bool EnableDebugger { get; set; }
 
         public Sprite(ITexture2D texture)
         {
@@ -47,6 +68,8 @@ namespace Hyjynx.Core.Rendering
             Scale = Vector2.One;
             Dimensions = new Vector2(texture.Width, texture.Height);
             IsVisible = true;
+            _debugger = new SpriteDebugger(this);
+            EnableDebugger = false;
         }
 
         public Sprite(ITexture2D texture, Rectangle source)
@@ -56,6 +79,18 @@ namespace Hyjynx.Core.Rendering
             Dimensions = new Vector2(source.Width, source.Height);
             _source = source;
             IsVisible = true;
+            _debugger = new SpriteDebugger(this);
+            EnableDebugger = false;
+        }
+
+        public override void Update()
+        {
+            if (EnableDebugger)
+            {
+                _debugger.Update();
+            }
+
+            base.Update();
         }
 
         public void Render(IRenderer renderer)
@@ -65,130 +100,144 @@ namespace Hyjynx.Core.Rendering
                 return;
             }
 
-            var position = Parent?.GetChildAbsolutePosition(this) ?? Position;
+            renderer.Draw(_texture, Position, Color.White, _source, Rotation, _absoluteOrigin, Scale);
 
-            renderer.Draw(_texture, position, Color.White, _source, Rotation, _origin, Scale);
+            if (EnableDebugger)
+            {
+                _debugger.Render(renderer);
+            }
 
-            DebuggingService.Identify(renderer, this, position);
-            DebuggingService.DrawRectangle(renderer, position, Dimensions * Scale, Rotation);
+            DebuggingService.Identify(renderer, this, Position);
+            DebuggingService.DrawRectangle(renderer, Position, Dimensions * Scale, Rotation);
         }
 
-        public Vector2 Translate(Vector2 offset) => Position += offset;
-        public Vector2 Translate(float x, float y) => Position += new Vector2(x, y);
-        public Vector2 Translate(int x, int y) => Position += new Vector2(x, y);
+        public Vector2 Translate(Vector2 offset) => Offset += offset;
+        public Vector2 Translate(float x, float y) => Offset += new Vector2(x, y);
+        public Vector2 Translate(int x, int y) => Offset += new Vector2(x, y);
 
-        public bool Intersects(Sprite other)
+        public bool Intersects(IBounded other)
         {
-            // Get the corners of the first rectangle
-            var rect1Corners = GetTransformedCorners(Position - (Dimensions / 2), Dimensions, Scale, Rotation, Origin);
+            var selfBounds = GetBounds();
 
-            // Get the corners of the second rectangle
-            var rect2Corners = GetTransformedCorners(other.Position - (other.Dimensions / 2), other.Dimensions, other.Scale, other.Rotation, other.Origin);
+            var otherBounds = other.GetBounds();
 
-            // Check if any of the corners of rect1 are inside rect2
-            foreach (var corner in rect1Corners)
+            if (selfBounds.Any(other.Contains) ||
+                otherBounds.Any(Contains))
             {
-                if (Contains(corner, other.Position - (other.Dimensions / 2), other.Rotation, other.Scale, other.Origin, other.Dimensions))
-                {
-                    return true;
-                }
+                return true;
             }
 
-            // Check if any of the corners of rect2 are inside rect1
-            foreach (var corner in rect2Corners)
-            {
-                if (Contains(corner, (Position - Dimensions / 2), Rotation, Scale, Origin, Dimensions))
-                {
-                    return true;
-                }
-            }
-
-            // No intersection found
             return false;
         }
 
-        private static Vector2[] GetTransformedCorners(Vector2 position, Vector2 dimensions, Vector2 scale, float rotation, Vector2 origin)
+        public IEnumerable<Vector2> GetBounds()
         {
-            Vector2[] corners = new Vector2[4];
+            var key = new BoundsCacheKey(Position, Dimensions, Scale, Rotation, _relativeOrigin);
 
-            // Calculate the original corners relative to the origin
-            corners[0] = new Vector2(-origin.X, -origin.Y); // Top-left
-            corners[1] = new Vector2(dimensions.X - origin.X, -origin.Y); // Top-right
-            corners[2] = new Vector2(dimensions.X - origin.X, dimensions.Y - origin.Y); // Bottom-right
-            corners[3] = new Vector2(-origin.X, dimensions.Y - origin.Y); // Bottom-left
-
-            // Apply scale
-            for (int i = 0; i < 4; i++)
+            if (_bounds.HasValue && _bounds.Value.Item1 == key)
             {
-                corners[i] *= scale;
+                return _bounds.Value.Item2;
             }
 
-            // Apply rotation
-            float cos = (float)Math.Cos(rotation);
-            float sin = (float)Math.Sin(rotation);
-            for (int i = 0; i < 4; i++)
-            {
-                float xNew = corners[i].X * cos - corners[i].Y * sin;
-                float yNew = corners[i].X * sin + corners[i].Y * cos;
-                corners[i] = new Vector2(xNew, yNew);
-            }
+            var width = Dimensions.X * Scale.X;
+            var height = Dimensions.Y * Scale.Y;
 
-            // Apply translation
-            for (int i = 0; i < 4; i++)
-            {
-                corners[i] += position;
-            }
+            var offsetX = _relativeOrigin.X * width;
+            var offsetY = _relativeOrigin.Y * height;
 
-            return corners;
+            var topLeft = new Vector2(-offsetX, -offsetY);
+            var topRight = new Vector2(width - offsetX, -offsetY);
+            var bottomLeft = new Vector2(-offsetX, height - offsetY);
+            var bottomRight = new Vector2(width - offsetX, height - offsetY);
+
+            topLeft = RotatePoint(topLeft, Rotation);
+            topRight = RotatePoint(topRight, Rotation);
+            bottomLeft = RotatePoint(bottomLeft, Rotation);
+            bottomRight = RotatePoint(bottomRight, Rotation);
+
+            topLeft += Position;
+            topRight += Position;
+            bottomLeft += Position;
+            bottomRight += Position;
+
+            _bounds = (key, [topLeft, topRight, bottomLeft, bottomRight]);
+
+            return _bounds.Value.Item2;
         }
 
-        private static bool Contains(Point point, Vector2 position, float rotation, Vector2 scale, Vector2 origin, Vector2 dimensions) =>
-            Contains(new Vector2(point.X, point.Y), position, rotation, scale, origin, dimensions);
-
-        private static bool Contains(Vector2 point, Vector2 position, float rotation, Vector2 scale, Vector2 origin, Vector2 dimensions)
+        public bool Contains(Vector2 point)
         {
             // Step 1: Translate the point to the rectangle's local space
-            var translatedPoint = point - position;
+            var translatedPoint = point - Position;
 
             // Step 2: Reverse the rotation
-            var cos = (float)Math.Cos(-rotation);
-            var sin = (float)Math.Sin(-rotation);
+            var cos = (float)Math.Cos(-Rotation);
+            var sin = (float)Math.Sin(-Rotation);
             var rotatedPoint = new Vector2(
                 translatedPoint.X * cos - translatedPoint.Y * sin,
                 translatedPoint.X * sin + translatedPoint.Y * cos
             );
 
             // Step 3: Reverse the scale
-            var scaledPoint = rotatedPoint / scale;
+            var scaledPoint = rotatedPoint / Scale;
+
+            var x = (int)(-_relativeOrigin.X * Dimensions.X);
+            var y = (int)(-_relativeOrigin.Y * Dimensions.Y);
+            var width = (int)Dimensions.X;
+            var height = (int)Dimensions.Y;
 
             // Step 4: Check if the point is within the bounds of the rectangle
-            var localRect = new Rectangle((int)-origin.X, (int)-origin.Y, (int)dimensions.X, (int)dimensions.Y);
+            var localRect = new Rectangle(x, y, width, height);
 
             return localRect.Contains((int)scaledPoint.X, (int)scaledPoint.Y);
         }
-        
-        public bool Contains(Point point) => Contains(point, Position, Rotation, Scale, Origin, Dimensions);
+
+        private (BoundsCacheKey, Vector2[])? _bounds;
+
+        private static Vector2 RotatePoint(Vector2 point, float angle)
+        {
+            var cos = (float)Math.Cos(angle);
+            var sin = (float)Math.Sin(angle);
+
+            return new Vector2(
+                point.X * cos - point.Y * sin,
+                point.X * sin + point.Y * cos
+            );
+        }
 
         private void UpdateOrigin()
         {
-            var width = Dimensions.X * Scale.X;
-            var height = Dimensions.Y * Scale.Y;
+            var width = Dimensions.X;
+            var height = Dimensions.Y;
 
             switch (Anchor)
             {
                 case RotationAnchor.TopLeft:
-                    _origin = new Vector2(0, 0);
+                    _relativeOrigin = Vector2.Zero;
+                    _absoluteOrigin = Vector2.Zero;
                     break;
+
                 case RotationAnchor.Center:
-                    _origin = new Vector2(width / 2, height / 2);
+                    _relativeOrigin = Half;
+                    _absoluteOrigin = new Vector2(width / 2, height / 2);
                     break;
             }
         }
 
-        private Vector2 _origin;
+        private static readonly Vector2 Half = Vector2.One / 2;
+
+        private Vector2 _dimensions;
+        private Vector2 _scale;
+        private Vector2 _relativeOrigin;
+        private Vector2 _absoluteOrigin;
+
         private RotationAnchor _anchor;
 
         private readonly ITexture2D _texture;
         private readonly Rectangle? _source;
+
+        private readonly SpriteDebugger _debugger;
+
+        private record BoundsCacheKey(Vector2 Position, Vector2 Dimensions, Vector2 Scale, float Rotation, Vector2 Origin);
     }
 }

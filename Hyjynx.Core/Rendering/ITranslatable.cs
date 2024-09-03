@@ -7,7 +7,8 @@ namespace Hyjynx.Core.Rendering
         // todo: gotta move this to some base class
         IContainer? Parent { get; set; }
 
-        Vector2 Position { get; set; }
+        Vector2 Offset { get; set; }
+        Vector2 Position { get; }
 
         Vector2 Translate(Vector2 offset);
         Vector2 Translate(float x, float y);

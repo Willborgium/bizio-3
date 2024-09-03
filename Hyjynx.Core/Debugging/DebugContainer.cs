@@ -37,7 +37,7 @@ namespace Hyjynx.Core.Debugging
             var x = screenWidth - root.Dimensions.X;
             var y = screenHeight - root.Dimensions.Y;
 
-            root.Position = new Vector2(x, y);
+            root.Offset = new Vector2(x, y);
         }
 
         private void LogVisuals(object sender, EventArgs e)

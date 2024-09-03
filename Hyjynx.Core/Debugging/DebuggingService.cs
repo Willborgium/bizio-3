@@ -53,7 +53,7 @@ namespace Hyjynx.Core.Debugging
             }
 
             var id = target.Identifier ?? "Unknown";
-            var p = position ?? target.Position;
+            var p = position ?? target.Offset;
 
             renderer.DrawText(Font, id, p, Color.White);
         }

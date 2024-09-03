@@ -1,7 +1,6 @@
 ﻿using Hyjynx.Core.Debugging;
 using Hyjynx.Core.Rendering;
 using Hyjynx.Core.Rendering.Interface;
-using Hyjynx.Racer.Models;
 using System.Drawing;
 using System.Numerics;
 
@@ -25,11 +24,11 @@ namespace Hyjynx.Racer.GameObjects
             AddChild(rotation);
             rotation.Bind(t => t.Text = $"{car.Rotation:0.000}");
 
-            car.Bind(c => Position = c.Position - new Vector2(25, 200));
+            car.Bind(c => Offset = c.Offset - new Vector2(25, 200));
 
             var position = new LabeledTextBox { Font = DebuggingService.Font, Color = color.Value, Label = "Position" };
             AddChild(position);
-            position.Bind(t => t.Text = $"{car.Position.X:0.0},{car.Position.Y:0.0}");
+            position.Bind(t => t.Text = $"{car.Offset.X:0.0},{car.Offset.Y:0.0}");
         }
     }
 }
