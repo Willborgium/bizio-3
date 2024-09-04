@@ -60,37 +60,35 @@ namespace Hyjynx.Core.Rendering
             }
         }
 
-        public bool EnableDebugger { get; set; }
+        public Vector2 RelativeOrigin => _relativeOrigin;
 
-        public Sprite(ITexture2D texture)
+        public IDebugger Debugger { get; }
+
+        public IBounded Bounds { get; set; }
+
+        public Sprite(ITexture2D texture, Rectangle? source = null, bool enableDebugger = false, IBounded? bounds = null)
         {
-            _texture = texture;
             Scale = Vector2.One;
-            Dimensions = new Vector2(texture.Width, texture.Height);
             IsVisible = true;
-            _debugger = new SpriteDebugger(this);
-            EnableDebugger = false;
-        }
 
-        public Sprite(ITexture2D texture, Rectangle source)
-        {
             _texture = texture;
-            Scale = Vector2.One;
-            Dimensions = new Vector2(source.Width, source.Height);
-            _source = source;
-            IsVisible = true;
-            _debugger = new SpriteDebugger(this);
-            EnableDebugger = false;
-        }
 
-        public override void Update()
-        {
-            if (EnableDebugger)
+            if (source != null)
             {
-                _debugger.Update();
+                Dimensions = new Vector2(source.Value.Width, source.Value.Height);
+                _source = source;
+            }
+            else
+            {
+                Dimensions = new Vector2(texture.Width, texture.Height);
             }
 
-            base.Update();
+            Debugger = new SpriteDebugger(this)
+            {
+                IsEnabled = enableDebugger
+            };
+
+            Bounds = bounds ?? NoBounds.Instance;
         }
 
         public void Render(IRenderer renderer)
@@ -102,10 +100,7 @@ namespace Hyjynx.Core.Rendering
 
             renderer.Draw(_texture, Position, Color.White, _source, Rotation, _absoluteOrigin, Scale);
 
-            if (EnableDebugger)
-            {
-                _debugger.Render(renderer);
-            }
+            Debugger.Render(renderer);
 
             DebuggingService.Identify(renderer, this, Position);
             DebuggingService.DrawRectangle(renderer, Position, Dimensions * Scale, Rotation);
@@ -114,96 +109,6 @@ namespace Hyjynx.Core.Rendering
         public Vector2 Translate(Vector2 offset) => Offset += offset;
         public Vector2 Translate(float x, float y) => Offset += new Vector2(x, y);
         public Vector2 Translate(int x, int y) => Offset += new Vector2(x, y);
-
-        public bool Intersects(IBounded other)
-        {
-            var selfBounds = GetBounds();
-
-            var otherBounds = other.GetBounds();
-
-            if (selfBounds.Any(other.Contains) ||
-                otherBounds.Any(Contains))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public IEnumerable<Vector2> GetBounds()
-        {
-            var key = new BoundsCacheKey(Position, Dimensions, Scale, Rotation, _relativeOrigin);
-
-            if (_bounds.HasValue && _bounds.Value.Item1 == key)
-            {
-                return _bounds.Value.Item2;
-            }
-
-            var width = Dimensions.X * Scale.X;
-            var height = Dimensions.Y * Scale.Y;
-
-            var offsetX = _relativeOrigin.X * width;
-            var offsetY = _relativeOrigin.Y * height;
-
-            var topLeft = new Vector2(-offsetX, -offsetY);
-            var topRight = new Vector2(width - offsetX, -offsetY);
-            var bottomLeft = new Vector2(-offsetX, height - offsetY);
-            var bottomRight = new Vector2(width - offsetX, height - offsetY);
-
-            topLeft = RotatePoint(topLeft, Rotation);
-            topRight = RotatePoint(topRight, Rotation);
-            bottomLeft = RotatePoint(bottomLeft, Rotation);
-            bottomRight = RotatePoint(bottomRight, Rotation);
-
-            topLeft += Position;
-            topRight += Position;
-            bottomLeft += Position;
-            bottomRight += Position;
-
-            _bounds = (key, [topLeft, topRight, bottomLeft, bottomRight]);
-
-            return _bounds.Value.Item2;
-        }
-
-        public bool Contains(Vector2 point)
-        {
-            // Step 1: Translate the point to the rectangle's local space
-            var translatedPoint = point - Position;
-
-            // Step 2: Reverse the rotation
-            var cos = (float)Math.Cos(-Rotation);
-            var sin = (float)Math.Sin(-Rotation);
-            var rotatedPoint = new Vector2(
-                translatedPoint.X * cos - translatedPoint.Y * sin,
-                translatedPoint.X * sin + translatedPoint.Y * cos
-            );
-
-            // Step 3: Reverse the scale
-            var scaledPoint = rotatedPoint / Scale;
-
-            var x = (int)(-_relativeOrigin.X * Dimensions.X);
-            var y = (int)(-_relativeOrigin.Y * Dimensions.Y);
-            var width = (int)Dimensions.X;
-            var height = (int)Dimensions.Y;
-
-            // Step 4: Check if the point is within the bounds of the rectangle
-            var localRect = new Rectangle(x, y, width, height);
-
-            return localRect.Contains((int)scaledPoint.X, (int)scaledPoint.Y);
-        }
-
-        private (BoundsCacheKey, Vector2[])? _bounds;
-
-        private static Vector2 RotatePoint(Vector2 point, float angle)
-        {
-            var cos = (float)Math.Cos(angle);
-            var sin = (float)Math.Sin(angle);
-
-            return new Vector2(
-                point.X * cos - point.Y * sin,
-                point.X * sin + point.Y * cos
-            );
-        }
 
         private void UpdateOrigin()
         {
@@ -224,6 +129,12 @@ namespace Hyjynx.Core.Rendering
             }
         }
 
+        public bool Contains(Vector2 point) => Bounds.Contains(point);
+
+        public bool Intersects(IBounded other) => Bounds.Intersects(other);
+
+        public IEnumerable<Vector2> GetBounds() => Bounds.GetBounds();
+
         private static readonly Vector2 Half = Vector2.One / 2;
 
         private Vector2 _dimensions;
@@ -235,9 +146,5 @@ namespace Hyjynx.Core.Rendering
 
         private readonly ITexture2D _texture;
         private readonly Rectangle? _source;
-
-        private readonly SpriteDebugger _debugger;
-
-        private record BoundsCacheKey(Vector2 Position, Vector2 Dimensions, Vector2 Scale, float Rotation, Vector2 Origin);
     }
 }

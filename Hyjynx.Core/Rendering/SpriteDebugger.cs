@@ -1,54 +1,23 @@
-﻿using Hyjynx.Core.Debugging;
-using Hyjynx.Core.Rendering.Interface;
-using System.Drawing;
-using System.Numerics;
+﻿using System.Drawing;
 
 namespace Hyjynx.Core.Rendering
 {
-    public class SpriteDebugger : StackContainer
+    public class SpriteDebugger : VisualDebugger
     {
         public SpriteDebugger(Sprite target, Color? color = null)
+            : base(color)
         {
-            Direction = LayoutDirection.Vertical;
-            Padding = new Vector4(5);
-            ZIndex = 5;
+            BindTo(target);
 
-            var c = color ?? Color.Black;
-
-            target.Bind(t => Offset = t.Offset);
-
-            AddLabel("Position:", c, t => Print(t, target.Position));
-            AddLabel("Offset:", c, t => Print(t, target.Offset));
-            AddLabel("Dimensions:", c, t => Print(t, target.Dimensions));
-            AddLabel("Scale:", c, t => Print(t, target.Scale));
-            AddLabel("Rotation:", c, t => Print(t, target.Rotation));
-            AddLabel("Origin:", c, t => Print(t, target.Origin));
-
-            AddLabel("Bounds:", c, t => PrintBounds(t, target));
+            AddLabel("Position:", () => Print(target.Position));
+            AddLabel("Offset:", () => Print(target.Offset));
+            AddLabel("Dimensions:", () => Print(target.Dimensions));
+            AddLabel("Scale:", () => Print(target.Scale));
+            AddLabel("Rotation:", () => Print(target.Rotation));
+            AddLabel("Origin:", () => Print(target.Origin));
+            AddLabel("Bounds:", () => PrintBounds(target));
         }
 
-        private static void PrintBounds(LabeledTextBox t, Sprite target)
-        {
-            var bounds = target.GetBounds();
-
-            t.Text = string.Join(Environment.NewLine, bounds.Select(c => $"{c.X:0.0},{c.Y:0.0}"));
-        }
-
-        private void AddLabel(string label, Color color, Action<LabeledTextBox> printer)
-        {
-            var x = new LabeledTextBox { Font = DebuggingService.Font, Color = color, Label = label };
-            AddChild(x);
-            x.Bind(printer);
-        }
-
-        private static void Print(LabeledTextBox t, Vector2 value)
-        {
-            t.Text = $"{value.X:0.0},{value.Y:0.0}";
-        }
-
-        private static void Print(LabeledTextBox t, float value)
-        {
-            t.Text = $"{value:0.00}";
-        }
+        private string PrintBounds(Sprite target) => string.Join(Environment.NewLine, target.GetBounds().Select(Print));
     }
 }

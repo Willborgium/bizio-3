@@ -8,6 +8,7 @@ using Hyjynx.Racer.Models;
 using Hyjynx.Racer.Services;
 using System.Drawing;
 using System.Numerics;
+using System.Xml.Xsl;
 
 namespace Hyjynx.Racer.Scenes
 {
@@ -56,9 +57,12 @@ namespace Hyjynx.Racer.Scenes
                 Offset = new Vector2(500, 500),
                 Rotation = .5f,
                 ZIndex = 1,
-                Identifier = "car",
-                EnableDebugger = true
+                Identifier = "car"
             };
+
+            car.Debugger.IsEnabled = true;
+
+            car.Bounds = new RectangleBounds(car);
 
             _visualRoot += car;
 
@@ -79,7 +83,9 @@ namespace Hyjynx.Racer.Scenes
                 GetInputs = GetPlayerInputs
             };
 
-            _visualRoot += new VehicleDebugger(car, playerVehicle, Color.Blue);
+            //_visualRoot += new VehicleDebugger(car, playerVehicle, Color.Blue);
+
+            car.Debugger.AddLabel("Velocity", () => VisualDebugger.Print(playerVehicle.Velocity));
 
             // TRACK SELECTOR
             var tracks = _trackService.TrackMetadata;
@@ -154,13 +160,12 @@ namespace Hyjynx.Racer.Scenes
             var s = _inputService.GetKeyState(Keys.S);
             var d = _inputService.GetKeyState(Keys.D);
 
-            return new VehicleInputs
-            {
-                Accelerate = w == KeyState.Down,
-                Brake = s == KeyState.Down,
-                TurnLeft = a == KeyState.Down,
-                TurnRight = d == KeyState.Down
-            };
+            return new VehicleInputs(
+                w == KeyState.Down,
+                s == KeyState.Down,
+                a == KeyState.Down,
+                d == KeyState.Down
+            );
         }
 
         private readonly IInputService _inputService;

@@ -7,7 +7,7 @@ namespace Hyjynx.Racer.GameObjects
     {
         public float Velocity { get; private set; }
 
-        public Func<VehicleInputs> GetInputs { get; set; }
+        public Func<VehicleInputs>? GetInputs { get; set; }
 
         public Vehicle(Sprite target, IVehicleData vehicleData)
         {
@@ -18,7 +18,7 @@ namespace Hyjynx.Racer.GameObjects
 
         public void Update()
         {
-            var inputs = GetInputs();
+            var inputs = GetInputs?.Invoke() ?? VehicleInputs.None;
 
             TryMoveCar(inputs);
         }

@@ -71,6 +71,8 @@ namespace Hyjynx.Racer.Services
                         Scale = new Vector2(scale)
                     };
 
+                    cell.Bounds = new RectangleBounds(cell);
+
                     trackContainer.AddChild(cell);
                 }
             }

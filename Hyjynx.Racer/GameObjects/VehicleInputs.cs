@@ -1,10 +1,7 @@
 ﻿namespace Hyjynx.Racer.GameObjects
 {
-    public record VehicleInputs
+    public record VehicleInputs(bool Accelerate, bool Brake, bool TurnLeft, bool TurnRight)
     {
-        public bool Accelerate;
-        public bool Brake;
-        public bool TurnLeft;
-        public bool TurnRight;
+        public static readonly VehicleInputs None = new(false, false, false, false);
     }
 }
